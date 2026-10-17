@@ -22,10 +22,6 @@
     .notice-track span { margin: 0 40px; }
     .notice-bar:hover .notice-track { animation-play-state: paused; }
     @keyframes slideRight { from { transform: translateX(-100%); } to { transform: translateX(100vw); } }
-    @media (prefers-reduced-motion: reduce) {
-      .notice-track { animation: none; white-space: normal; display: block; text-align: center; }
-      .notice-bar { white-space: normal; }
-    }
 
     .header-container { max-width: 1200px; margin: 0 auto; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; }
     .logo { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 700; color: var(--secondary-color); }
