@@ -21,7 +21,7 @@ jobs:
 
       - name: Download CSV from Google Sheet
         env:
-          SHEET_ID: "1xby10YuaEb2e33UalrVEG5gW19flRmybp9Ow-R_p27Y"
+          SHEET_ID: ${{ secrets.SHEET_ID }}
         run: |
           curl -fsSL --retry 3 --max-time 30 \
             "https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv" \
@@ -39,7 +39,7 @@ jobs:
 
       - name: Download settings tab (notices and areas)
         env:
-          SHEET_ID: "1xby10YuaEb2e33UalrVEG5gW19flRmybp9Ow-R_p27Y"
+          SHEET_ID: ${{ secrets.SHEET_ID }}
         run: |
           # "settings" নামের ট্যাব না থাকলে এই ধাপ চুপচাপ বাদ যাবে, কিছু ভাঙবে না
           if curl -fsSL --retry 2 --max-time 30 \
