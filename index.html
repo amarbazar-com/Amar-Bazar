@@ -88,6 +88,27 @@
       .header-container { flex-direction: column; gap: 12px; }
       .modal-content { width: 95%; padding: 18px; }
     }
+
+    /* ---------- ব্র্যান্ড কার্ড ও নতুন ডিজাইন ---------- */
+    .section-title { font-size: 20px; font-weight: 800; color: var(--secondary-color); margin: 8px 0 14px; display: flex; align-items: center; gap: 8px; }
+    .brand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; margin-bottom: 26px; }
+    .brand-card { background: var(--white); border-radius: 12px; overflow: hidden; box-shadow: 0 6px 18px var(--shadow); cursor: pointer; transition: transform .25s ease; border: none; text-align: left; padding: 0; width: 100%; }
+    .brand-card:hover { transform: translateY(-4px); }
+    .brand-card img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; background: #f1f1f1; }
+    .brand-card .bc-info { padding: 10px 12px 12px; }
+    .brand-card .bc-title { font-weight: 800; font-size: 15px; color: #2c3e50; line-height: 1.3; }
+    .brand-card .bc-meta { font-size: 12.5px; color: #777; margin-top: 4px; }
+    .brand-card .bc-price { font-size: 13px; color: var(--accent-color); font-weight: 700; margin-top: 2px; }
+    .brand-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .back-btn { border: 2px solid var(--secondary-color); background: var(--white); color: var(--secondary-color); padding: 8px 16px; border-radius: 22px; font-weight: 700; cursor: pointer; font-size: 14px; }
+    .back-btn:hover { background: var(--secondary-color); color: #fff; }
+    .brand-bar h2 { font-size: 22px; color: #2c3e50; }
+    .brand-bar small { color: #777; font-size: 14px; }
+    .product-card { position: relative; }
+    .badge { position: absolute; top: 10px; left: 10px; background: var(--accent-color); color: #fff; font-size: 12px; font-weight: 800; padding: 4px 9px; border-radius: 14px; z-index: 2; }
+    .code-tag { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,.55); color: #fff; font-size: 11px; padding: 3px 8px; border-radius: 12px; z-index: 2; letter-spacing: .3px; }
+    .product-title { min-height: 0; margin-bottom: 8px; }
+    .price-ask { font-size: 14px; color: #666; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -110,28 +131,49 @@
   </div>
 
   <div class="category-container">
-    <div class="search-box">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="search" id="searchInput" placeholder="প্রোডাক্ট খুঁজুন... (যেমন: শার্ট, মশারি)" autocomplete="off" />
-      <button type="button" class="clear-search" id="clearSearch" hidden aria-label="মুছুন">&times;</button>
+
+    <div id="homeArea">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" id="searchInput" placeholder="ব্র্যান্ড বা কোড খুঁজুন... (যেমন: কটন, RC-25)" autocomplete="off" />
+        <button type="button" class="clear-search" id="clearSearch" hidden aria-label="মুছুন">&times;</button>
+      </div>
+
+      <div class="category-tabs" id="categoryTabs">
+        <button class="tab-btn active" data-cat="all">সব</button>
+        <button class="tab-btn" data-cat="men">Men (ছেলেদের)</button>
+        <button class="tab-btn" data-cat="women">Women (মেয়েদের)</button>
+        <button class="tab-btn" data-cat="kids">Kids (শিশুদের)</button>
+        <button class="tab-btn" data-cat="others">Others (অন্যান্য)</button>
+      </div>
+
+      <div class="result-info" id="resultInfo"></div>
+
+      <div id="codeSection" hidden>
+        <div class="section-title"><i class="fa-solid fa-tag"></i> কোড অনুযায়ী পণ্য</div>
+        <div class="product-grid" id="codeGrid"></div>
+      </div>
+
+      <div id="newSection" hidden>
+        <div class="section-title"><i class="fa-solid fa-bolt"></i> নতুন এসেছে</div>
+        <div class="product-grid" id="newGrid" style="margin-bottom:26px"></div>
+      </div>
+
+      <div class="section-title" id="brandTitle"><i class="fa-solid fa-layer-group"></i> কালেকশন</div>
+      <div class="brand-grid" id="brandGrid">
+        <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> লোড হচ্ছে...</div>
+      </div>
     </div>
 
-    <div class="category-tabs" id="categoryTabs">
-      <button class="tab-btn active" data-cat="all">সব প্রোডাক্ট</button>
-      <button class="tab-btn" data-cat="men">Men (ছেলেদের)</button>
-      <button class="tab-btn" data-cat="women">Women (মেয়েদের)</button>
-      <button class="tab-btn" data-cat="kids">Kids (শিশুদের)</button>
-      <button class="tab-btn" data-cat="others">Others (অন্যান্য)</button>
-    </div>
-
-    <div class="result-info" id="resultInfo"></div>
-
-    <div class="product-grid" id="productGrid">
-      <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> প্রোডাক্ট লোড হচ্ছে...</div>
-    </div>
-
-    <div class="load-more-wrap" id="loadMoreWrap" hidden>
-      <button type="button" class="load-more-btn" id="loadMoreBtn">আরও প্রোডাক্ট দেখুন</button>
+    <div id="brandArea" hidden>
+      <div class="brand-bar">
+        <button type="button" class="back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i> পেছনে</button>
+        <div><h2 id="brandName"></h2><small id="brandCount"></small></div>
+      </div>
+      <div class="product-grid" id="productGrid"></div>
+      <div class="load-more-wrap" id="loadMoreWrap" hidden>
+        <button type="button" class="load-more-btn" id="loadMoreBtn">আরও দেখুন</button>
+      </div>
     </div>
   </div>
 
@@ -162,6 +204,7 @@
         <img id="previewImg" src="" alt="Product" />
         <div class="modal-product-info">
           <div class="modal-product-name" id="previewName"></div>
+          <div id="previewCode" style="font-size:12.5px;color:#777;margin-bottom:4px"></div>
           <div class="modal-product-price" id="previewPrice"></div>
         </div>
       </div>
@@ -203,324 +246,349 @@
   <script>
     const ADMIN_WHATSAPP = "8801891962606";
 
-    const REFRESH_MINUTES = 5;
-    const FETCH_TIMEOUT_MS = 8000;
-    const CACHE_KEY = "products_raw_v3";
-    const SETTINGS_CACHE_KEY = "settings_raw_v1";
-    const PAGE_SIZE = 40;               // একবারে কতগুলো প্রোডাক্ট দেখাবে
+    const CACHE_MINUTES = 5;            // নতুন তথ্য আনার ব্যবধান (ব্রাউজার ক্যাশ)
+    const FETCH_TIMEOUT_MS = 12000;
+    const PAGE_SIZE = 40;               // একবারে কতগুলো পণ্য দেখাবে
+    const PART_SIZE = 1000;             // build.py-র সাথে একই থাকতে হবে
     const PLACEHOLDER = "https://placehold.co/600x400/f0f0f0/333?text=No+Image";
-
-    // settings.csv না পেলে এই এলাকাগুলো দেখাবে (Google Sheet-এর settings ট্যাবে এলাকা দিলে এগুলো আর দেখাবে না)
     const DEFAULT_AREAS = ["বাড্ডা"];
-    const KNOWN_CATEGORIES = ["men", "women", "kids"];
 
-    function bucket() { return Math.floor(Date.now() / (REFRESH_MINUTES * 60 * 1000)); }
+    // Google Apps Script "লাইভ" লিংক (শেষে /exec)। খালি থাকলে শুধু GitHub-এর ডেটা চলবে।
+    // বসালে Sheet-এ দাম/ঘোষণা/নতুন পণ্য বদলালে সাইটে প্রায় ২০–৩০ সেকেন্ডে দেখা যাবে।
+    const LIVE_URL = "https://script.google.com/macros/s/AKfycbzDQNrpEMmV-2fD9gM8DWb_CzC0a885aaaBt8taJTbsY7D9NsYQdaxXUrcZ1s4sO2LrDQ/exec";
+    const LIVE_SECONDS = 20;
+    const CAT_LABEL = { men: "ছেলেদের", women: "মেয়েদের", kids: "শিশুদের", others: "অন্যান্য" };
 
-    let allProducts = [];
+    function bucket() { return Math.floor(Date.now() / (CACHE_MINUTES * 60 * 1000)); }
+
+    let brands = [], brandById = {}, newItems = [];
     let areas = DEFAULT_AREAS.slice();
     let notices = [];
     let currentCategory = "all";
     let searchQuery = "";
-    let currentList = [];
-    let shownCount = PAGE_SIZE;
-    let lastProductsRaw = "";
-    let lastError = "";
+    let store = [];                     // কার্ডে দেখানো পণ্যগুলো (অর্ডার বাটনের জন্য)
+    let bv = null;                      // এখন খোলা ব্র্যান্ডের অবস্থা
+    let loadError = "";
+    let builtRow = 0;                   // GitHub-এর ডেটা Sheet-এর যে সারি পর্যন্ত বানানো
+    let brandByKey = {};
+    let live = { byId: {}, pending: [] };
+    let lastLiveText = "";
+
+    const CAT_MAP = {
+      men: "men", man: "men", boys: "men", "ছেলেদের": "men", "ছেলে": "men",
+      women: "women", woman: "women", "মেয়েদের": "women", "মেয়ে": "women",
+      kids: "kids", kid: "kids", "শিশুদের": "kids", "শিশু": "kids", "বাচ্চা": "kids"
+    };
+    function normCat(c) { return CAT_MAP[String(c || "").trim().toLowerCase()] || "others"; }
+    function toNumber(v) {
+      if (v === undefined || v === null || v === "") return 0;
+      const s = String(v).replace(/[০-৯]/g, d => "০১২৩৪৫৬৭৮৯".indexOf(d)).replace(/[^\d.]/g, "");
+      return Number(s) || 0;
+    }
+    function discountOf(price, d) {
+      d = String(d || "").trim();
+      if (!d || price <= 0) return 0;
+      const f = d.endsWith("%") ? Math.round(price * (1 - toNumber(d.slice(0, -1)) / 100)) : Math.round(price - toNumber(d));
+      return f > 0 && f < price ? f : 0;
+    }
 
     /* ---------- helpers ---------- */
     function escapeHTML(s) {
       return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
+    function bn(n) { try { return Number(n).toLocaleString("bn-BD"); } catch (_) { return String(n); } }
 
-    function toNumber(v) {
-      if (v === undefined || v === null || v === "") return 0;
-      const bn = "০১২৩৪৫৬৭৮৯";
-      const s = String(v).replace(/[০-৯]/g, d => bn.indexOf(d)).replace(/[^\d.]/g, "");
-      return Number(s) || 0;
+    function isFileId(r) { return /^[\w-]{20,}$/.test(r || ""); }
+    function imgUrl(ref, w) {
+      if (!ref) return PLACEHOLDER;
+      if (isFileId(ref)) return `https://lh3.googleusercontent.com/d/${ref}=w${w}`;
+      if (/^https?:\/\//i.test(ref)) return ref;
+      return PLACEHOLDER;
     }
 
-    function fixImageUrl(url) {
-      if (!url) return PLACEHOLDER;
-      url = url.trim();
-      const m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/) || url.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([^&]+)/);
-      if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w800`;
-      if (!/^https?:\/\//i.test(url)) return PLACEHOLDER;
-      return url;
-    }
-
-    // men/women/kids ছাড়া যেকোনো ক্যাটাগরি "others" হিসেবে ধরা হবে
-    function normCategory(c) {
-      c = (c || "").toLowerCase().trim();
-      return KNOWN_CATEGORIES.includes(c) ? c : "others";
-    }
-
-    /* ---------- CSV parser ---------- */
-    function parseCSVRows(text) {
-      text = text.replace(/^\uFEFF/, "");
-      const rows = [];
-      let row = [], field = "", inQuotes = false;
-      for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
-        if (inQuotes) {
-          if (ch === '"') {
-            if (text[i + 1] === '"') { field += '"'; i++; }
-            else inQuotes = false;
-          } else field += ch;
-        } else {
-          if (ch === '"') inQuotes = true;
-          else if (ch === ",") { row.push(field); field = ""; }
-          else if (ch === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
-          else if (ch === "\r") { /* skip */ }
-          else field += ch;
-        }
-      }
-      if (field !== "" || row.length) { row.push(field); rows.push(row); }
-      return rows;
-    }
-
-    function parseProducts(csv) {
-      const rows = parseCSVRows(csv);
-      if (rows.length < 2) return null;
-      const headers = rows[0].map(h => h.trim().toLowerCase());
-      if (!headers.includes("name")) return null;
-
-      const products = [];
-      for (let i = 1; i < rows.length; i++) {
-        const r = rows[i];
-        if (!r.some(v => v.trim() !== "")) continue;
-        const o = {};
-        headers.forEach((h, idx) => { o[h] = (r[idx] || "").trim(); });
-        if (!o.name) continue;
-        const price = toNumber(o.price);
-        const disc = toNumber(o.discount_price);
-        products.push({
-          _i: products.length,
-          _s: o.name.toLowerCase(),
-          name: o.name,
-          category: normCategory(o.category),
-          price: price,
-          discount_price: disc > 0 ? disc : 0,
-          img: fixImageUrl(o.img)
-        });
-      }
-      return products;
-    }
-
-    // settings.csv: প্রথম সারিতে type,value  —  type হলো notice অথবা area
-    function parseSettings(csv) {
-      const rows = parseCSVRows(csv);
-      if (rows.length < 2) return null;
-      const headers = rows[0].map(h => h.trim().toLowerCase());
-      const ti = headers.indexOf("type"), vi = headers.indexOf("value");
-      if (ti < 0 || vi < 0) return null;
-      const out = { notices: [], areas: [] };
-      for (let i = 1; i < rows.length; i++) {
-        const t = (rows[i][ti] || "").trim().toLowerCase();
-        const v = (rows[i][vi] || "").trim();
-        if (!v) continue;
-        if (t === "notice") out.notices.push(v);
-        else if (t === "area") out.areas.push(v);
-      }
-      return out;
-    }
-
-    /* ---------- fetch ---------- */
-    async function fetchText(url) {
+    async function getJSON(path) {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
       try {
-        const res = await fetch(url, { signal: ctrl.signal });
+        const res = await fetch(`${path}?v=${bucket()}`, { signal: ctrl.signal });
         if (!res.ok) throw new Error("HTTP " + res.status);
-        return await res.text();
-      } finally {
-        clearTimeout(t);
-      }
-    }
-
-    async function loadProductsFresh() {
-      try {
-        const text = await fetchText(`products.csv?v=${bucket()}`);
-        const products = parseProducts(text);
-        if (products && products.length) return { text, products };
-        lastError = "products.csv পাওয়া গেছে কিন্তু ভেতরে কোনো প্রোডাক্ট নেই (হেডারে name, category, price, discount_price, img আছে কিনা দেখুন)";
-      } catch (e) {
-        lastError = location.protocol === "file:"
-          ? "ফাইলটি কম্পিউটার থেকে সরাসরি খোলা হয়েছে। অনলাইন সাইট (GitHub Pages) থেকে খুলুন"
-          : "products.csv লোড হয়নি (" + e.message + ")। GitHub repo-তে products.csv আছে কিনা দেখুন";
-        console.warn("products failed:", e.message);
-      }
-      return null;
-    }
-
-    async function loadSettingsFresh() {
-      try {
-        const text = await fetchText(`settings.csv?v=${bucket()}`);
-        const s = parseSettings(text);
-        if (s) return { text, settings: s };
-      } catch (e) { /* settings না থাকলে সমস্যা নেই */ }
-      return null;
+        return await res.json();
+      } finally { clearTimeout(t); }
     }
 
     /* ---------- ঘোষণা বার ---------- */
-    function applySettings(s) {
-      if (!s) return;
-      notices = s.notices;
-      if (s.areas.length) areas = s.areas;
-      renderNotices();
-    }
-
     function renderNotices() {
       const bar = document.getElementById("noticeBar");
       const track = document.getElementById("noticeTrack");
       if (!notices.length) { bar.hidden = true; return; }
       track.innerHTML = notices.map(n => `<span>${escapeHTML(n)}</span>`).join("");
       bar.hidden = false;
-      // লেখা যত লম্বা, সময়ও তত বেশি — যাতে গতি পড়ার মতো থাকে
       const dist = track.offsetWidth + window.innerWidth;
       track.style.animationDuration = Math.max(12, Math.round(dist / 70)) + "s";
     }
+    window.addEventListener("resize", () => { if (notices.length) renderNotices(); });
 
-    /* ---------- render ---------- */
-    function buildList() {
-      let list = allProducts;
-      if (searchQuery) {
-        const words = searchQuery.split(/\s+/).filter(Boolean);
-        list = list.filter(p => words.every(w => p._s.includes(w)));
-      } else if (currentCategory !== "all") {
-        list = list.filter(p => p.category === currentCategory);
-      }
-      return list;
+    /* ---------- কার্ড ---------- */
+    function toItem(a, bid) {          // [code, img, name, price, disc, own]
+      return reprice({ code: a[0], img: a[1], name: a[2] || "", p0: a[3] || 0, d0: a[4] || 0, own: a[5] || 0, bid: bid });
     }
 
-    function cardHTML(p) {
-      const hasDisc = p.discount_price > 0 && p.discount_price !== p.price;
-      const price = hasDisc ? p.discount_price : p.price;
+    // লাইভ তথ্য থাকলে ব্র্যান্ডের নতুন দাম/ছাড় অনুযায়ী দাম ঠিক করে
+    function reprice(it) {
+      const l = live.byId[it.bid];
+      let price = it.p0, disc = it.d0;
+      if (l) {
+        if (!(it.own & 1) && l.p > 0) price = l.p;
+        disc = ((it.own & 2) && it.d0 > 0 && it.d0 < price) ? it.d0 : discountOf(price, l.d);
+      } else if (it.pending) {
+        disc = (it.d0 > 0 && it.d0 < price) ? it.d0 : 0;
+      }
+      it.price = price; it.disc = disc;
+      return it;
+    }
+
+    function itemName(it) {
+      if (it.name) return it.name;
+      const b = brandById[it.bid];
+      return b ? b.t : "";
+    }
+
+    function pendingFor(bid) { return live.pending.filter(p => p.bid === bid); }
+
+    function cardHTML(it) {
+      const idx = store.push(it) - 1;
+      const hasDisc = it.disc > 0 && it.disc < it.price;
+      const now = hasDisc ? it.disc : it.price;
+      const pct = hasDisc ? Math.round((1 - it.disc / it.price) * 100) : 0;
       return `
         <div class="product-card">
-          <img src="${escapeHTML(p.img)}" class="product-image" alt="${escapeHTML(p.name)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="1">
+          ${pct > 0 ? `<span class="badge">${bn(pct)}% ছাড়</span>` : ""}
+          <span class="code-tag">${escapeHTML(it.code)}</span>
+          <img src="${escapeHTML(imgUrl(it.img, 500))}" class="product-image" alt="${escapeHTML(itemName(it))}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="1">
           <div class="product-info">
-            <div class="product-title">${escapeHTML(p.name)}</div>
+            <div class="product-title">${escapeHTML(itemName(it))}</div>
             <div class="price-box">
-              <span class="product-price">৳ ${price}</span>
-              ${hasDisc ? `<span class="old-price">৳ ${p.price}</span>` : ""}
+              ${now > 0
+                ? `<span class="product-price">৳ ${now}</span>${hasDisc ? `<span class="old-price">৳ ${it.price}</span>` : ""}`
+                : `<span class="price-ask">দাম জানতে মেসেজ করুন</span>`}
             </div>
-            <button class="order-btn" data-index="${p._i}">
-              <i class="fa-brands fa-whatsapp"></i> Order Now
-            </button>
+            <button class="order-btn" data-index="${idx}"><i class="fa-brands fa-whatsapp"></i> Order Now</button>
           </div>
         </div>`;
     }
 
-    function render(reset) {
-      const grid = document.getElementById("productGrid");
-      if (reset) { currentList = buildList(); shownCount = PAGE_SIZE; }
+    function brandCardHTML(b) {
+      return `
+        <button type="button" class="brand-card" data-id="${escapeHTML(b.id)}">
+          <img src="${escapeHTML(imgUrl(b.cover, 400))}" alt="${escapeHTML(b.t)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="1">
+          <div class="bc-info">
+            <div class="bc-title">${escapeHTML(b.t)}</div>
+            <div class="bc-meta">${escapeHTML(CAT_LABEL[b.c] || "")} · ${bn(b.n)} টি পণ্য</div>
+            ${b.min > 0 ? `<div class="bc-price">৳ ${b.min} থেকে</div>` : ""}
+          </div>
+        </button>`;
+    }
 
+    // ছবি লোড না হলে placeholder
+    document.addEventListener("error", e => {
+      const img = e.target;
+      if (img && img.tagName === "IMG" && img.dataset && img.dataset.fallback && img.src !== PLACEHOLDER) img.src = PLACEHOLDER;
+    }, true);
+
+    /* ---------- হোম ---------- */
+    function showHome() {
+      bv = null;
+      document.getElementById("brandArea").hidden = true;
+      document.getElementById("homeArea").hidden = false;
+      renderHome();
+    }
+
+    function renderHome() {
+      store = [];
+      const grid = document.getElementById("brandGrid");
       const info = document.getElementById("resultInfo");
-      info.textContent = searchQuery ? `"${searchQuery}" এর জন্য ${currentList.length} টি প্রোডাক্ট পাওয়া গেছে` : "";
+      const newSec = document.getElementById("newSection");
+      const codeSec = document.getElementById("codeSection");
+      const title = document.getElementById("brandTitle");
+      codeSec.hidden = true;
 
-      if (!currentList.length) {
-        grid.innerHTML = searchQuery
-          ? '<p class="loading">দুঃখিত, এই নামে কোনো প্রোডাক্ট পাওয়া যায়নি। অন্য নামে খুঁজে দেখুন।</p>'
-          : '<p class="loading">কোনো প্রোডাক্ট পাওয়া যায়নি!</p>';
-        document.getElementById("loadMoreWrap").hidden = true;
+      if (loadError) {
+        newSec.hidden = true;
+        grid.innerHTML = '<p class="loading">লোড করতে সমস্যা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।<br><small style="font-size:12px;color:#999">' + escapeHTML(loadError) + '</small></p>';
         return;
       }
 
-      grid.innerHTML = currentList.slice(0, shownCount).map(cardHTML).join("");
-      document.getElementById("loadMoreWrap").hidden = shownCount >= currentList.length;
+      let list = brands;
+      if (searchQuery) {
+        const words = searchQuery.split(/\s+/).filter(Boolean);
+        list = brands.filter(b => {
+          const hay = (b.t + " " + b.b + " " + (b.x || "")).toLowerCase();
+          return words.every(w => hay.includes(w));
+        });
+        info.textContent = `"${searchQuery}" এর জন্য ${bn(list.length)} টি কালেকশন পাওয়া গেছে`;
+        title.hidden = false;
+      } else {
+        info.textContent = "";
+        if (currentCategory !== "all") list = brands.filter(b => b.c === currentCategory);
+        title.hidden = false;
+      }
+
+      // নতুন পণ্য (শুধু "সব" ট্যাবে, সার্চ ছাড়া)
+      if (!searchQuery && currentCategory === "all" && (newItems.length || live.pending.length)) {
+        const fresh = live.pending.slice(0, 20);
+        const base = newItems.slice(0, Math.max(0, 20 - fresh.length)).map(a => toItem(a.slice(0, 6), a[6]));
+        document.getElementById("newGrid").innerHTML = fresh.concat(base).map(cardHTML).join("");
+        newSec.hidden = false;
+      } else newSec.hidden = true;
+
+      if (!list.length) {
+        grid.innerHTML = '<p class="loading">' + (searchQuery ? "দুঃখিত, এই নামে কিছু পাওয়া যায়নি।" : "এই ক্যাটাগরিতে এখনো কিছু নেই।") + '</p>';
+        return;
+      }
+      grid.innerHTML = list.slice(0, 300).map(brandCardHTML).join("");
     }
 
-    // ছবি লোড না হলে placeholder (একবারই ইভেন্ট ধরে — error ইভেন্ট bubble করে না তাই capture)
-    document.getElementById("productGrid").addEventListener("error", e => {
-      const img = e.target;
-      if (img && img.tagName === "IMG" && img.dataset.fallback && img.src !== PLACEHOLDER) img.src = PLACEHOLDER;
-    }, true);
-
-    document.getElementById("loadMoreBtn").addEventListener("click", () => {
-      shownCount += PAGE_SIZE;
-      render(false);
+    document.getElementById("brandGrid").addEventListener("click", e => {
+      const c = e.target.closest(".brand-card");
+      if (c) location.hash = "#b/" + c.dataset.id;
     });
 
-    /* ---------- init ---------- */
-    async function init() {
-      // ১) আগে cache থেকে দেখাও
+    /* ---------- ব্র্যান্ড পেজ ---------- */
+    async function openBrand(id) {
+      const b = brandById[id];
+      if (!b) { showHome(); return; }
+      bv = { b: b, list: [], next: b.parts - 1, shown: 0 };
+      document.getElementById("homeArea").hidden = true;
+      document.getElementById("brandArea").hidden = false;
+      document.getElementById("brandName").textContent = b.t;
+      document.getElementById("brandCount").textContent = `${CAT_LABEL[b.c] || ""} · ${bn(b.n)} টি পণ্য`;
+      document.getElementById("productGrid").innerHTML = '<div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> লোড হচ্ছে...</div>';
+      document.getElementById("loadMoreWrap").hidden = true;
+      window.scrollTo(0, 0);
+      const mine = bv;
       try {
-        const rawS = localStorage.getItem(SETTINGS_CACHE_KEY);
-        if (rawS) applySettings(parseSettings(rawS));
-        const raw = localStorage.getItem(CACHE_KEY);
-        if (raw) {
-          const p = parseProducts(raw);
-          if (p && p.length) { allProducts = p; lastProductsRaw = raw; render(true); }
-        }
-      } catch (_) {}
-
-      // ২) পেছনে নতুন ডেটা আনো
-      const [prod, sett] = await Promise.all([loadProductsFresh(), loadSettingsFresh()]);
-
-      if (sett) {
-        applySettings(sett.settings);
-        try { localStorage.setItem(SETTINGS_CACHE_KEY, sett.text); } catch (_) {}
-      }
-
-      if (prod) {
-        if (prod.text !== lastProductsRaw) {
-          allProducts = prod.products;
-          lastProductsRaw = prod.text;
-          render(true);
-        }
-        try { localStorage.setItem(CACHE_KEY, prod.text); } catch (_) {}
-      } else if (!allProducts.length) {
-        document.getElementById("productGrid").innerHTML =
-          '<p class="loading">প্রোডাক্ট লোড করতে সমস্যা হয়েছে। দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।<br><small style="font-size:12px;color:#999">' + escapeHTML(lastError) + '</small></p>';
+        bv.shown = PAGE_SIZE;
+        await fillBrand();
+        if (bv !== mine) return;
+        store = [];
+        renderBrandGrid();
+      } catch (e) {
+        document.getElementById("productGrid").innerHTML = '<p class="loading">লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।</p>';
       }
     }
 
-    /* ---------- category ---------- */
+    // দরকার অনুযায়ী পরের অংশের ফাইল আনে (নতুন পণ্য আগে)
+    async function fillBrand() {
+      const mine = bv;
+      while (mine.list.length + pendingFor(mine.b.id).length < mine.shown && mine.next >= 0) {
+        const part = await getJSON(`data/b/${mine.b.id}-${mine.next}.json`);
+        mine.next--;
+        for (let i = part.length - 1; i >= 0; i--) mine.list.push(toItem(part[i], mine.b.id));
+      }
+    }
+
+    function renderBrandGrid() {
+      const grid = document.getElementById("productGrid");
+      const all = pendingFor(bv.b.id).concat(bv.list);
+      const show = all.slice(0, bv.shown);
+      store = [];
+      grid.innerHTML = show.map(cardHTML).join("");
+      document.getElementById("loadMoreWrap").hidden = !(all.length > bv.shown || bv.next >= 0);
+    }
+
+    document.getElementById("loadMoreBtn").addEventListener("click", async () => {
+      const btn = document.getElementById("loadMoreBtn");
+      btn.disabled = true;
+      try {
+        bv.shown += PAGE_SIZE;
+        await fillBrand();
+        const y = window.scrollY;
+        renderBrandGrid();
+        window.scrollTo(0, y);
+      } catch (e) { alert("লোড করতে সমস্যা হয়েছে, আবার চেষ্টা করুন"); }
+      btn.disabled = false;
+    });
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      if (history.length > 1) history.back(); else location.hash = "";
+    });
+
+    /* ---------- রাউটিং ---------- */
+    function route() {
+      const m = location.hash.match(/^#b\/(\w+)$/);
+      if (m && brandById[m[1]]) openBrand(m[1]);
+      else showHome();
+    }
+    window.addEventListener("hashchange", route);
+
+    /* ---------- ক্যাটাগরি ও সার্চ ---------- */
     function setActiveTab(cat) {
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.cat === cat));
     }
-
     document.getElementById("categoryTabs").addEventListener("click", e => {
       const btn = e.target.closest(".tab-btn");
       if (!btn) return;
       currentCategory = btn.dataset.cat;
       setActiveTab(currentCategory);
-      // ক্যাটাগরি বদলালে সার্চ পরিষ্কার হবে
       searchQuery = "";
-      document.getElementById("searchInput").value = "";
-      document.getElementById("clearSearch").hidden = true;
-      render(true);
+      searchInput.value = "";
+      clearBtn.hidden = true;
+      renderHome();
     });
 
-    /* ---------- search ---------- */
     let searchTimer = null;
     const searchInput = document.getElementById("searchInput");
     const clearBtn = document.getElementById("clearSearch");
 
-    function runSearch() {
+    async function findByCode(q) {
+      const m = q.match(/^([a-z0-9]+)\s*-?\s*(\d+)$/i);
+      if (!m) return null;
+      const prefix = m[1].toUpperCase(), n = Number(m[2]);
+      const b = brands.find(x => (x.x || "").toUpperCase() === prefix);
+      if (!b) return null;
+      const wanted = (b.x + "-" + n).toUpperCase();
+      const guess = Math.min(b.parts - 1, Math.floor((n - 1) / PART_SIZE));
+      const order = [];
+      for (let p = 0; p < b.parts; p++) order.push(p);
+      order.sort((a, c) => Math.abs(a - guess) - Math.abs(c - guess));
+      for (const p of order.slice(0, 8)) {
+        const part = await getJSON(`data/b/${b.id}-${p}.json`);
+        const hit = part.find(a => String(a[0]).toUpperCase() === wanted);
+        if (hit) return toItem(hit, b.id);
+      }
+      return null;
+    }
+
+    async function runSearch() {
       searchQuery = searchInput.value.trim().toLowerCase();
       clearBtn.hidden = !searchQuery;
       if (searchQuery) { currentCategory = "all"; setActiveTab("all"); }
-      render(true);
+      renderHome();
+      if (!searchQuery) return;
+      const mine = searchQuery;
+      let hit = null;
+      try { hit = await findByCode(mine); } catch (_) {}
+      if (mine !== searchQuery) return;
+      const sec = document.getElementById("codeSection");
+      if (hit) {
+        document.getElementById("codeGrid").innerHTML = cardHTML(hit);
+        sec.hidden = false;
+      } else sec.hidden = true;
     }
-
     searchInput.addEventListener("input", () => {
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(runSearch, 200);   // হাজার হাজার প্রোডাক্টেও যেন আটকে না যায়
+      searchTimer = setTimeout(runSearch, 250);
     });
-    clearBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      runSearch();
-      searchInput.focus();
-    });
+    clearBtn.addEventListener("click", () => { searchInput.value = ""; runSearch(); searchInput.focus(); });
 
-    /* ---------- order modal ---------- */
+    /* ---------- অর্ডার ---------- */
     let selected = null;
 
-    document.getElementById("productGrid").addEventListener("click", e => {
-      const btn = e.target.closest(".order-btn");
+    document.addEventListener("click", e => {
+      const btn = e.target.closest(".order-btn[data-index]");
       if (!btn) return;
-      const p = allProducts[Number(btn.dataset.index)];
-      if (p) openOrderModal(p);
+      const it = store[Number(btn.dataset.index)];
+      if (it) openOrderModal(it);
     });
 
     function fillAreaOptions() {
@@ -531,15 +599,16 @@
       if (keep && areas.includes(keep)) sel.value = keep;
     }
 
-    function openOrderModal(p) {
-      const hasDisc = p.discount_price > 0 && p.discount_price !== p.price;
-      selected = { name: p.name, price: hasDisc ? p.discount_price : p.price, oldPrice: hasDisc ? p.price : "", img: p.img };
+    function openOrderModal(it) {
+      const hasDisc = it.disc > 0 && it.disc < it.price;
+      selected = { name: itemName(it), code: it.code, price: hasDisc ? it.disc : it.price, oldPrice: hasDisc ? it.price : "", img: imgUrl(it.img, 800) };
 
       const img = document.getElementById("previewImg");
-      img.src = p.img;
+      img.src = imgUrl(it.img, 600);
       img.onerror = () => { img.src = PLACEHOLDER; };
-      document.getElementById("previewName").textContent = p.name;
-      let t = `৳ ${selected.price}`;
+      document.getElementById("previewName").textContent = itemName(it);
+      document.getElementById("previewCode").textContent = "কোড: " + it.code;
+      let t = selected.price > 0 ? `৳ ${selected.price}` : "দাম জানতে মেসেজ করুন";
       if (selected.oldPrice) t += ` (আগের দাম: ৳ ${selected.oldPrice})`;
       document.getElementById("previewPrice").textContent = t;
 
@@ -547,14 +616,9 @@
       document.getElementById("orderModal").style.display = "flex";
     }
 
-    function closeOrderModal() {
-      document.getElementById("orderModal").style.display = "none";
-    }
-
+    function closeOrderModal() { document.getElementById("orderModal").style.display = "none"; }
     document.getElementById("closeModalBtn").addEventListener("click", closeOrderModal);
-    document.getElementById("orderModal").addEventListener("click", e => {
-      if (e.target.id === "orderModal") closeOrderModal();
-    });
+    document.getElementById("orderModal").addEventListener("click", e => { if (e.target.id === "orderModal") closeOrderModal(); });
     document.addEventListener("keydown", e => { if (e.key === "Escape") closeOrderModal(); });
 
     document.getElementById("orderForm").addEventListener("submit", e => {
@@ -570,14 +634,11 @@
       if (!area) { alert("অনুগ্রহ করে এলাকা বেছে নিন"); return; }
       if (!address) { alert("অনুগ্রহ করে বিস্তারিত ঠিকানা লিখুন"); return; }
 
-      const bn = "০১২৩৪৫৬৭৮৯";
-      const phoneEn = phone.replace(/[০-৯]/g, d => bn.indexOf(d)).replace(/[\s-]/g, "");
-      if (!/^(?:\+?88)?01[3-9]\d{8}$/.test(phoneEn)) {
-        alert("সঠিক মোবাইল নম্বর দিন (যেমন: 01712345678)");
-        return;
-      }
+      const digits = "০১২৩৪৫৬৭৮৯";
+      const phoneEn = phone.replace(/[০-৯]/g, d => digits.indexOf(d)).replace(/[\s-]/g, "");
+      if (!/^(?:\+?88)?01[3-9]\d{8}$/.test(phoneEn)) { alert("সঠিক মোবাইল নম্বর দিন (যেমন: 01712345678)"); return; }
 
-      let priceDetails = `৳ ${selected.price}`;
+      let priceDetails = selected.price > 0 ? `৳ ${selected.price}` : "দাম জানতে চান";
       if (selected.oldPrice) priceDetails += ` (আগের দাম: ৳ ${selected.oldPrice})`;
 
       let msg = `🛍️ *নতুন প্রোডাক্ট অর্ডার*
@@ -585,8 +646,10 @@
 📦 *প্রোডাক্টের তথ্য*
 ━━━━━━━━━━━━━━━━
 *প্রোডাক্ট:* ${selected.name}
+*কোড:* ${selected.code}
 *মূল্য:* ${priceDetails}
-*ছবি লিঙ্ক:* ${selected.img}
+*ছবি দেখতে নিচের লিংকে চাপুন:*
+${selected.img}
 
 👤 *কাস্টমারের তথ্য*
 ━━━━━━━━━━━━━━━━
@@ -603,7 +666,100 @@
       e.target.reset();
     });
 
-    window.addEventListener("resize", () => { if (notices.length) renderNotices(); });
+    /* ---------- শুরু ---------- */
+    async function init() {
+      try {
+        const [b, n, s] = await Promise.all([
+          getJSON("data/brands.json"),
+          getJSON("data/new.json").catch(() => []),
+          getJSON("data/settings.json").catch(() => null)
+        ]);
+        brands = Array.isArray(b) ? b : b.brands;
+        builtRow = Array.isArray(b) ? 0 : (b.built || 0);
+        brandById = {}; brandByKey = {};
+        brands.forEach(x => { brandById[x.id] = x; brandByKey[x.c + "|" + x.b] = x; });
+        newItems = n || [];
+        if (s) {
+          notices = s.notices || [];
+          if (s.areas && s.areas.length) areas = s.areas;
+          renderNotices();
+        }
+      } catch (e) {
+        loadError = location.protocol === "file:"
+          ? "ফাইলটি কম্পিউটার থেকে সরাসরি খোলা হয়েছে। অনলাইন সাইট (GitHub Pages) থেকে খুলুন"
+          : "ডেটা ফাইল পাওয়া যায়নি (" + e.message + ")। GitHub-এ data ফোল্ডার আছে কিনা দেখুন";
+      }
+      route();
+      if (LIVE_URL) { fetchLive(); scheduleLive(); }
+    }
+
+    /* ---------- লাইভ আপডেট (Google Apps Script থেকে, ~২০ সেকেন্ডে) ---------- */
+    function driveIdOf(s) {
+      const m = String(s).match(/drive\.google\.com\/file\/d\/([\w-]+)/) || String(s).match(/[?&]id=([\w-]+)/);
+      return m && /drive\.google/.test(s) ? m[1] : "";
+    }
+
+    function applyLive(data) {
+      if (!data) return;
+      if (data.settings) {
+        notices = data.settings.notices || [];
+        if (data.settings.areas && data.settings.areas.length) areas = data.settings.areas;
+        renderNotices();
+      }
+      live.byId = {};
+      (data.brands || []).forEach(r => {
+        const b = brandByKey[normCat(r.c) + "|" + String(r.b || "").trim()];
+        if (!b) return;
+        live.byId[b.id] = { p: toNumber(r.p), d: String(r.d || "").trim() };
+        if (r.t && String(r.t).trim()) b.t = String(r.t).trim();
+      });
+      const pend = [];
+      (data.rows || []).forEach(r => {
+        if (!r.r || r.r <= builtRow) return;          // এগুলো GitHub-এর ডেটায় আগেই আছে
+        const ref = String(r.file_id || "").trim() || driveIdOf(r.img || "") || String(r.img || "").trim();
+        if (!ref) return;
+        const b = brandByKey[normCat(r.category) + "|" + (String(r.brand || "").trim() || "সাধারণ")];
+        const p0 = toNumber(r.price), d0 = toNumber(r.discount_price);
+        pend.push({ code: String(r.code || "").trim() || "R" + r.r, img: ref, name: String(r.name || "").trim(),
+                    p0: p0, d0: d0, own: (p0 > 0 ? 1 : 0) + (d0 > 0 ? 2 : 0), bid: b ? b.id : "", pending: true, row: r.r });
+      });
+      pend.sort((a, b) => b.row - a.row);
+      pend.forEach(reprice);
+      live.pending = pend;
+    }
+
+    function afterLive() {
+      if (searchQuery) return;                         // সার্চের ফল নষ্ট না করতে
+      const y = window.scrollY;
+      if (bv) {
+        bv.list.forEach(reprice);
+        document.getElementById("brandName").textContent = bv.b.t;
+        renderBrandGrid();
+      } else renderHome();
+      window.scrollTo(0, y);
+    }
+
+    async function fetchLive() {
+      if (!LIVE_URL) return;
+      try {
+        const res = await fetch(LIVE_URL + (LIVE_URL.includes("?") ? "&" : "?") + "t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) return;
+        const text = await res.text();
+        if (text === lastLiveText) return;
+        const data = JSON.parse(text);
+        lastLiveText = text;
+        applyLive(data);
+        afterLive();
+      } catch (_) { /* লাইভ না পেলে GitHub-এর ডেটাই চলবে */ }
+    }
+
+    function scheduleLive() {
+      setTimeout(async () => {
+        if (!document.hidden) await fetchLive();
+        scheduleLive();
+      }, (LIVE_SECONDS + Math.random() * 6) * 1000);
+    }
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchLive(); });
 
     init();
   </script>
