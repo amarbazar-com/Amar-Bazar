@@ -12,6 +12,7 @@ Sheet-এর ট্যাব:
 """
 import csv
 import hashlib
+import html
 import io
 import json
 import math
@@ -27,6 +28,8 @@ SHEET_ID = os.environ.get("SHEET_ID", "").strip()
 LOCAL = os.environ.get("LOCAL_TEST_DIR", "").strip()   # শুধু পরীক্ষার জন্য
 OUT = "data"
 TMP = "data.new"
+POUT = "p"          # প্রতিটা পণ্যের শেয়ার-পাতা (WhatsApp-এ ছবির প্রিভিউয়ের জন্য)
+PTMP = "p.new"
 PART_SIZE = 1000
 NEW_COUNT = 60
 
@@ -134,6 +137,52 @@ def num(x):
     return int(x) if x == int(x) else x
 
 
+def safe_name(code):
+    """কোড থেকে ফাইলের নাম। index.html-এর সাথে একই নিয়ম: A-Z a-z 0-9 _ - ছাড়া সব _ হবে।"""
+    return re.sub(r"[^A-Za-z0-9_-]", "_", str(code))
+
+
+def og_image(ref):
+    if re.fullmatch(r"[\w-]{20,}", ref or ""):
+        return f"https://lh3.googleusercontent.com/d/{ref}=w600"
+    if (ref or "").lower().startswith(("http://", "https://")):
+        return ref
+    return ""
+
+
+def share_page(item, brand_title, bid):
+    """WhatsApp/Facebook এই পাতা থেকে ছবি-নাম-দাম নিয়ে প্রিভিউ কার্ড বানায়।"""
+    code, ref, name, price, disc = item[0], item[1], item[2], item[3], item[4]
+    title = (name or brand_title or "আমার বাজার")
+    now = disc or price
+    if now:
+        desc = f"দাম: ৳{now}" + (f" (আগের দাম ৳{price})" if disc else "")
+    else:
+        desc = "দাম জানতে মেসেজ করুন"
+    desc += f" · কোড: {code} · আমার বাজার"
+    img = og_image(ref)
+    e = html.escape
+    price_html = f'<p class="p">৳ {e(str(now))}' + (f' <s>৳ {e(str(price))}</s>' if disc else "") + "</p>" if now else ""
+    og_img = (f'<meta property="og:image" content="{e(img)}">\n<meta name="twitter:card" content="summary_large_image">\n'
+              if img else "")
+    body_img = f'<img src="{e(img)}" alt="{e(title)}">' if img else ""
+    return f"""<!DOCTYPE html>
+<html lang="bn"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{e(title)} - {e(str(code))}</title>
+<meta property="og:type" content="product">
+<meta property="og:title" content="{e(title)} ({e(str(code))})">
+<meta property="og:description" content="{e(desc)}">
+{og_img}<style>body{{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f8f9fa;text-align:center}}
+img{{width:100%;max-width:560px;display:block;margin:0 auto}}.b{{padding:14px}}h1{{font-size:20px;margin:6px 0}}
+.p{{font-size:22px;font-weight:800;color:#e74c3c;margin:6px 0}}.p s{{font-size:15px;color:#888;font-weight:400}}
+a{{display:inline-block;margin:12px 0 24px;background:#25d366;color:#fff;text-decoration:none;padding:12px 22px;border-radius:24px;font-weight:700}}</style>
+</head><body>{body_img}<div class="b"><h1>{e(title)}</h1><div style="color:#777">কোড: {e(str(code))}</div>{price_html}
+<a href="../#b/{e(bid)}">আমার বাজারে আরও দেখুন</a></div></body></html>
+"""
+
+
 def main():
     ptxt = get_tab("products", first=True)
     ph, prows, total_rows = read_csv(ptxt or "")
@@ -210,6 +259,9 @@ def main():
     if os.path.exists(TMP):
         shutil.rmtree(TMP)
     os.makedirs(os.path.join(TMP, "b"))
+    if os.path.exists(PTMP):
+        shutil.rmtree(PTMP)
+    os.makedirs(PTMP)
 
     brand_list = []
     ids = {}
@@ -225,6 +277,9 @@ def main():
             chunk = items[p * PART_SIZE:(p + 1) * PART_SIZE]
             with open(os.path.join(TMP, "b", f"{bid}-{p}.json"), "w", encoding="utf-8") as f:
                 json.dump(chunk, f, ensure_ascii=False, separators=(",", ":"))
+        for it in items:
+            with open(os.path.join(PTMP, safe_name(it[0]) + ".html"), "w", encoding="utf-8") as f:
+                f.write(share_page(it, b["title"], bid))
         prices = [(it[4] or it[3]) for it in items if (it[4] or it[3]) > 0]
         brand_list.append({
             "id": bid, "c": b["cat"], "b": b["brand"], "t": b["title"], "x": b["prefix"],
@@ -271,6 +326,9 @@ def main():
     if os.path.exists(OUT):
         shutil.rmtree(OUT)
     os.rename(TMP, OUT)
+    if os.path.exists(POUT):
+        shutil.rmtree(POUT)
+    os.rename(PTMP, POUT)
     print(f"ঠিক আছে: {len(flat)} টি পণ্য, {len(brand_list)} টি ব্র্যান্ড")
 
 
