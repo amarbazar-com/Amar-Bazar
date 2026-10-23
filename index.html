@@ -601,7 +601,7 @@
 
     function openOrderModal(it) {
       const hasDisc = it.disc > 0 && it.disc < it.price;
-      selected = { name: itemName(it), code: it.code, price: hasDisc ? it.disc : it.price, oldPrice: hasDisc ? it.price : "", img: imgUrl(it.img, 800) };
+      selected = { name: itemName(it), code: it.code, price: hasDisc ? it.disc : it.price, oldPrice: hasDisc ? it.price : "", img: (it.pending || !it.code) ? imgUrl(it.img, 800) : location.origin + location.pathname.replace(/[^\/]*$/, "") + "p/" + String(it.code).replace(/[^A-Za-z0-9_-]/g, "_") + ".html" };
 
       const img = document.getElementById("previewImg");
       img.src = imgUrl(it.img, 600);
@@ -648,7 +648,7 @@
 *প্রোডাক্ট:* ${selected.name}
 *কোড:* ${selected.code}
 *মূল্য:* ${priceDetails}
-*ছবি দেখতে নিচের লিংকে চাপুন:*
+*ছবি দেখতে লিংকে চাপুন:*
 ${selected.img}
 
 👤 *কাস্টমারের তথ্য*
