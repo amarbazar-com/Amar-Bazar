@@ -19,54 +19,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download CSV from Google Sheet
+      - name: Build site data from Google Sheet
         env:
           SHEET_ID: ${{ secrets.SHEET_ID }}
-        run: |
-          curl -fsSL --retry 3 --max-time 30 \
-            "https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv" \
-            -o products.new.csv
-
-          if ! head -n 1 products.new.csv | tr 'A-Z' 'a-z' | grep -q "name"; then
-            echo "Downloaded file is not a valid products CSV. Keeping old products.csv"
-            exit 1
-          fi
-          if [ "$(wc -l < products.new.csv)" -lt 2 ]; then
-            echo "CSV has no product rows. Keeping old products.csv"
-            exit 1
-          fi
-          mv products.new.csv products.csv
-
-      - name: Download settings tab (notices and areas)
-        env:
-          SHEET_ID: ${{ secrets.SHEET_ID }}
-        run: |
-          # "settings" নামের ট্যাব না থাকলে এই ধাপ চুপচাপ বাদ যাবে, কিছু ভাঙবে না
-          if curl -fsSL --retry 2 --max-time 30 \
-            "https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=settings&headers=1" \
-            -o settings.new.csv \
-            && head -n 1 settings.new.csv | tr 'A-Z' 'a-z' | grep -q "type" \
-            && head -n 1 settings.new.csv | tr 'A-Z' 'a-z' | grep -q "value"; then
-            mv settings.new.csv settings.csv
-            echo "settings.csv updated"
-          else
-            echo "No valid settings tab found. Skipping."
-            rm -f settings.new.csv
-          fi
+        run: python3 build.py
 
       - name: Commit if changed
         id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add products.csv
-          if [ -f settings.csv ]; then git add settings.csv; fi
+          git add -A data
           if git diff --cached --quiet; then
             echo "No changes."
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git commit -m "Update products from Google Sheet"
+          git commit -m "Update site data from Google Sheet"
           git push
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
