@@ -111,6 +111,13 @@
     .code-tag { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,.55); color: #fff; font-size: 11px; padding: 3px 8px; border-radius: 12px; z-index: 2; letter-spacing: .3px; }
     .product-title { min-height: 0; margin-bottom: 8px; }
     .price-ask { font-size: 14px; color: #666; font-weight: 600; }
+    /* ---------- মালিকের ⋮ মেনু (শুধু অ্যাডমিন চালু থাকলে দেখা যায়) ---------- */
+    .admin-dots { display: none; position: absolute; top: 40px; right: 10px; z-index: 3; width: 34px; height: 34px; border: none; border-radius: 50%; background: rgba(255,255,255,.96); color: #222; font-size: 20px; font-weight: 900; line-height: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+    body.admin .admin-dots { display: block; }
+    .admin-pop { display: none; position: absolute; top: 78px; right: 10px; z-index: 4; background: #fff; border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.3); padding: 6px; }
+    .admin-pop.open { display: block; }
+    .admin-pop button { border: none; background: #fff; color: #d93025; font-weight: 800; font-size: 14px; padding: 10px 12px; cursor: pointer; white-space: nowrap; border-radius: 8px; }
+    .admin-pop button:hover { background: #fce8e6; }
     /* ---------- বন্ধ থাকার পর্দা (settings ট্যাবে "বন্ধ:" দিয়ে শুরু ঘোষণা দিলে সাইট শুধু এটা দেখায়) ---------- */
     #closedScreen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg); text-align: center; }
     #closedScreen[hidden] { display: none; }
@@ -297,7 +304,8 @@
     let loadError = "";
     let builtRow = 0;                   // GitHub-এর ডেটা Sheet-এর যে সারি পর্যন্ত বানানো
     let brandByKey = {};
-    let live = { byId: {}, pending: [] };
+    let live = { byId: {}, pending: [], sold: {} };
+    let adminUrl = "";                  // মোছার পাতার লিংক (Sheet-এর settings ট্যাবের "admin" সারি থেকে আসে)
     let lastLiveText = "";
 
     const CAT_MAP = {
@@ -391,7 +399,8 @@
       return b ? b.t : "";
     }
 
-    function pendingFor(bid) { return live.pending.filter(p => p.bid === bid); }
+    function pendingFor(bid) { return live.pending.filter(p => p.bid === bid && notSold(p)); }
+    function notSold(it) { return !live.sold[String(it.code).toUpperCase()]; }
 
     function cardHTML(it) {
       const idx = store.push(it) - 1;
@@ -402,6 +411,8 @@
         <div class="product-card">
           ${pct > 0 ? `<span class="badge">${bn(pct)}% ছাড়</span>` : ""}
           <span class="code-tag">${escapeHTML(it.code)}</span>
+          <button type="button" class="admin-dots" aria-label="মেনু">&#8942;</button>
+          <div class="admin-pop"><button type="button" data-del="${escapeHTML(it.code)}">🗑 মুছুন (বিক্রি হয়েছে)</button></div>
           <img src="${escapeHTML(imgUrl(it.img, 500))}" class="product-image" alt="${escapeHTML(itemName(it))}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="1">
           <div class="product-info">
             <div class="product-title">${escapeHTML(itemName(it))}</div>
@@ -474,8 +485,8 @@
       // নতুন পণ্য (শুধু "সব" ট্যাবে, সার্চ ছাড়া)
       if (!searchQuery && currentCategory === "all" && (newItems.length || live.pending.length)) {
         const fresh = live.pending.slice(0, 20);
-        const base = newItems.slice(0, Math.max(0, 20 - fresh.length)).map(a => toItem(a.slice(0, 6), a[6]));
-        document.getElementById("newGrid").innerHTML = fresh.concat(base).map(cardHTML).join("");
+        const base = newItems.slice(0, Math.max(0, 20 - fresh.length + 10)).map(a => toItem(a.slice(0, 6), a[6]));
+        document.getElementById("newGrid").innerHTML = fresh.concat(base).filter(notSold).slice(0, 20).map(cardHTML).join("");
         newSec.hidden = false;
       } else newSec.hidden = true;
 
@@ -518,7 +529,7 @@
     // দরকার অনুযায়ী পরের অংশের ফাইল আনে (নতুন পণ্য আগে)
     async function fillBrand() {
       const mine = bv;
-      while (mine.list.length + pendingFor(mine.b.id).length < mine.shown && mine.next >= 0) {
+      while (mine.list.filter(notSold).length + pendingFor(mine.b.id).length < mine.shown && mine.next >= 0) {
         const part = await getJSON(`data/b/${mine.b.id}-${mine.next}.json`);
         mine.next--;
         for (let i = part.length - 1; i >= 0; i--) mine.list.push(toItem(part[i], mine.b.id));
@@ -527,7 +538,7 @@
 
     function renderBrandGrid() {
       const grid = document.getElementById("productGrid");
-      const all = pendingFor(bv.b.id).concat(bv.list);
+      const all = pendingFor(bv.b.id).concat(bv.list).filter(notSold);
       const show = all.slice(0, bv.shown);
       store = [];
       grid.innerHTML = show.map(cardHTML).join("");
@@ -637,7 +648,7 @@
       try { hit = await findByCode(mine); } catch (_) {}
       if (mine !== searchQuery) return;
       const sec = document.getElementById("codeSection");
-      if (hit) {
+      if (hit && notSold(hit)) {
         document.getElementById("codeGrid").innerHTML = cardHTML(hit);
         sec.hidden = false;
       } else sec.hidden = true;
@@ -773,6 +784,10 @@ ${selected.img}
         if (data.settings.areas && data.settings.areas.length) areas = data.settings.areas;
         renderNotices();
       }
+      live.sold = {};
+      (data.sold || []).forEach(c => { live.sold[String(c).toUpperCase()] = 1; });
+      adminUrl = (data.settings && data.settings.admin) || "";
+      updateAdminMode();
       live.byId = {};
       (data.brands || []).forEach(r => {
         const b = brandByKey[normCat(r.c) + "|" + String(r.b || "").trim()];
@@ -886,6 +901,31 @@ ${selected.img}
         } catch (_) { /* ব্যানার না পেলে শুধু প্রথম ছবি থাকবে */ }
       }
     }
+
+    /* ---------- মালিকের মেনু ---------- */
+    // একবার সাইটের লিংকের শেষে #admin-on দিয়ে খুললে এই ডিভাইসে ⋮ মেনু চালু হয়; #admin-off দিলে বন্ধ।
+    function isAdminDevice() { try { return localStorage.getItem("ab_admin") === "1"; } catch (_) { return false; } }
+    function updateAdminMode() { document.body.classList.toggle("admin", isAdminDevice() && !!adminUrl); }
+    function applyAdminHash() {
+      const h = location.hash;
+      if (h === "#admin-on" || h === "#admin-off") {
+        try { localStorage.setItem("ab_admin", h === "#admin-on" ? "1" : "0"); } catch (_) {}
+        history.replaceState(null, "", location.pathname + location.search);
+        updateAdminMode();
+        setTimeout(() => alert(h === "#admin-on" ? "এই ডিভাইসে অ্যাডমিন মেনু (⋮) চালু হয়েছে" : "অ্যাডমিন মেনু বন্ধ হয়েছে"), 300);
+      }
+    }
+    applyAdminHash();
+    window.addEventListener("hashchange", applyAdminHash);
+    document.addEventListener("click", e => {
+      const dots = e.target.closest(".admin-dots");
+      const del = e.target.closest("[data-del]");
+      document.querySelectorAll(".admin-pop.open").forEach(x => { if (!dots || x !== dots.nextElementSibling) x.classList.remove("open"); });
+      if (dots) { dots.nextElementSibling.classList.toggle("open"); return; }
+      if (del && adminUrl) {
+        window.open(adminUrl + (adminUrl.includes("?") ? "&" : "?") + "admin=1&code=" + encodeURIComponent(del.dataset.del), "_blank");
+      }
+    });
 
     initHero();
     init();
