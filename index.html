@@ -118,6 +118,19 @@
     .admin-pop.open { display: block; }
     .admin-pop button { border: none; background: #fff; color: #d93025; font-weight: 800; font-size: 14px; padding: 10px 12px; cursor: pointer; white-space: nowrap; border-radius: 8px; }
     .admin-pop button:hover { background: #fce8e6; }
+    /* ---------- অগ্রিম পেমেন্ট ---------- */
+    .pay-box { background: #fff8e1; border: 2px dashed #f5a623; border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+    .pay-box h4 { font-size: 15px; color: #8a5a00; margin-bottom: 6px; }
+    .pay-box p { font-size: 13.5px; line-height: 1.6; color: #5d4300; margin-bottom: 8px; }
+    .pay-num { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; font-size: 15px; }
+    .pay-num b { flex: 1; }
+    .pay-num button { border: none; background: #075e54; color: #fff; border-radius: 6px; padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .done-box { text-align: center; }
+    .done-box .tick { font-size: 54px; line-height: 1; margin-bottom: 8px; }
+    .done-box h3 { margin-bottom: 10px; }
+    .done-box ol { text-align: left; margin: 12px 0 16px 22px; line-height: 1.8; font-size: 15px; color: #444; }
+    .done-box .wa-again { display: block; text-align: center; text-decoration: none; margin-bottom: 8px; }
+    .done-box .ok-btn { width: 100%; border: 2px solid var(--secondary-color); background: #fff; color: var(--secondary-color); padding: 11px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; }
     /* ---------- বন্ধ থাকার পর্দা (settings ট্যাবে "বন্ধ:" দিয়ে শুরু ঘোষণা দিলে সাইট শুধু এটা দেখায়) ---------- */
     #closedScreen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg); text-align: center; }
     #closedScreen[hidden] { display: none; }
@@ -258,10 +271,45 @@
           <label>ফেসবুক আইডি লিঙ্ক (Optional):</label>
           <input type="url" id="custFB" placeholder="https://facebook.com/yourid" />
         </div>
+        <div id="paySection" hidden>
+          <div class="pay-box">
+            <h4>💳 অর্ডার নিশ্চিত করতে ৳<span id="advAmt"></span> অগ্রিম পাঠান</h4>
+            <p>নিচের নম্বরে <b>Send Money</b> করুন। এই টাকা আপনার পণ্যের দামের সাথে <b>বাদ যাবে</b>। টাকা পাঠানোর পর নিচে মাধ্যম, নম্বর ও Transaction ID (TrxID) লিখুন। অর্ডারের পর WhatsApp-এ পেমেন্টের <b>স্ক্রিনশটও</b> পাঠাবেন।</p>
+            <div id="payNums"></div>
+          </div>
+          <div class="form-group">
+            <label>যে মাধ্যমে পাঠিয়েছেন: <span style="color:#e74c3c">*</span></label>
+            <select id="payMethod"></select>
+          </div>
+          <div class="form-group">
+            <label>যে নম্বর থেকে পাঠিয়েছেন: <span style="color:#e74c3c">*</span></label>
+            <input type="tel" id="payFrom" placeholder="017XXXXXXXX" />
+          </div>
+          <div class="form-group">
+            <label>Transaction ID (TrxID): <span style="color:#e74c3c">*</span></label>
+            <input type="text" id="payTrx" placeholder="যেমন: 8N7A6D5E4C" autocapitalize="characters" />
+            <small>পেমেন্টের মেসেজ বা অ্যাপে TrxID লেখা থাকে</small>
+          </div>
+        </div>
         <button type="submit" class="order-btn">
           <i class="fa-brands fa-whatsapp"></i> WhatsApp-এ অর্ডার করুন
         </button>
       </form>
+    </div>
+  </div>
+
+  <div class="modal" id="doneModal">
+    <div class="modal-content done-box">
+      <div class="tick">✅</div>
+      <h3>অর্ডারের তথ্য তৈরি হয়েছে</h3>
+      <ol>
+        <li>WhatsApp খুলে যাওয়া মেসেজটি অবশ্যই <b>Send</b> করুন। Send না করলে আমরা অর্ডার পাব না।</li>
+        <li id="doneStep2">পেমেন্টের <b>স্ক্রিনশট</b> ওই চ্যাটেই পাঠান।</li>
+        <li id="doneStep3">আপনার ৳<span id="doneAmt"></span> যাচাই হলে আমরা WhatsApp-এ অর্ডার নিশ্চিত করব।</li>
+        <li><span id="doneDelivery"></span> পণ্য পেয়ে যাবেন।</li>
+      </ol>
+      <a href="#" target="_blank" rel="noopener" class="order-btn wa-again" id="waAgain"><i class="fa-brands fa-whatsapp"></i> WhatsApp খোলেনি? এখানে চাপুন</a>
+      <button type="button" class="ok-btn" id="doneClose">ঠিক আছে</button>
     </div>
   </div>
 
@@ -272,6 +320,17 @@
 
   <script>
     const ADMIN_WHATSAPP = "8801891962606";
+
+    // ---------- অগ্রিম পেমেন্ট (অর্ডার নিশ্চিত করতে) ----------
+    // নিচে নিজের নম্বর বসান (Send Money/Personal নম্বর)। যে মাধ্যম দেবেন না, তার নম্বর "" রাখুন, সেটা দেখাবে না।
+    // সবগুলো "" থাকলে অগ্রিম পেমেন্টের অংশটা পুরোপুরি বন্ধ থাকবে (আগের মতো সরাসরি অর্ডার)।
+    const ADVANCE_AMOUNT = 50;          // অগ্রিম কত টাকা
+    const DELIVERY_TEXT = "ঢাকায় ১-২ দিন, ঢাকার বাইরে ৩-৫ দিনের মধ্যে";   // অর্ডারের পরের পর্দায় দেখাবে
+    const PAY_METHODS = [
+      { name: "bKash", number: "" },
+      { name: "Nagad", number: "" },
+      { name: "Rocket", number: "" }
+    ];
 
     // ---------- ওপরের চলমান ব্যানার ছবি ----------
     // ছবিগুলো আসে Drive-এর আলাদা "ব্যানার" ফোল্ডার থেকে (Apps Script-এ BANNER_FOLDER_ID বসানো থাকলে)।
@@ -699,6 +758,55 @@
     document.getElementById("orderModal").addEventListener("click", e => { if (e.target.id === "orderModal") closeOrderModal(); });
     document.addEventListener("keydown", e => { if (e.key === "Escape") closeOrderModal(); });
 
+    /* ---------- অগ্রিম পেমেন্টের অংশ ---------- */
+    const activePay = PAY_METHODS.filter(m => String(m.number).trim());
+    function setupPay() {
+      if (!activePay.length || !(ADVANCE_AMOUNT > 0)) return;
+      document.getElementById("advAmt").textContent = ADVANCE_AMOUNT;
+      document.getElementById("payNums").innerHTML = activePay.map((m, i) =>
+        `<div class="pay-num"><span>${escapeHTML(m.name)}:</span> <b>${escapeHTML(m.number)}</b> <button type="button" data-copy="${i}">কপি</button></div>`).join("");
+      document.getElementById("payMethod").innerHTML = '<option value="">-- বেছে নিন --</option>' +
+        activePay.map(m => `<option value="${escapeHTML(m.name)}">${escapeHTML(m.name)}</option>`).join("");
+      document.getElementById("paySection").hidden = false;
+    }
+    document.getElementById("payNums").addEventListener("click", e => {
+      const b = e.target.closest("[data-copy]");
+      if (!b) return;
+      const num = String(activePay[Number(b.dataset.copy)].number).trim();
+      const done = () => { b.textContent = "কপি হয়েছে ✓"; setTimeout(() => { b.textContent = "কপি"; }, 1500); };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(num).then(done, () => { fallbackCopy(num); done(); }); }
+        else { fallbackCopy(num); done(); }
+      } catch (_) { fallbackCopy(num); done(); }
+    });
+    function fallbackCopy(t) {
+      const ta = document.createElement("textarea");
+      ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (_) {}
+      document.body.removeChild(ta);
+    }
+    setupPay();
+
+    /* ---------- অর্ডার Sheet-এ জমা + অর্ডারের পরের পর্দা ---------- */
+    function logOrder(o) {                      // Sheet-এর "orders" ট্যাবে পাঠায় (ব্যর্থ হলেও WhatsApp অর্ডার ঠিকই যাবে)
+      if (!LIVE_URL) return;
+      try {
+        o.action = "order";
+        fetch(LIVE_URL, { method: "POST", mode: "no-cors", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(o) }).catch(() => {});
+      } catch (_) {}
+    }
+    function showDone(waUrl, hasPay) {
+      document.getElementById("doneStep2").hidden = !hasPay;
+      document.getElementById("doneStep3").hidden = !hasPay;
+      document.getElementById("doneAmt").textContent = ADVANCE_AMOUNT;
+      document.getElementById("doneDelivery").textContent = DELIVERY_TEXT;
+      document.getElementById("waAgain").href = waUrl;
+      document.getElementById("doneModal").style.display = "flex";
+    }
+    document.getElementById("doneClose").addEventListener("click", () => { document.getElementById("doneModal").style.display = "none"; });
+    document.getElementById("doneModal").addEventListener("click", e => { if (e.target.id === "doneModal") e.currentTarget.style.display = "none"; });
+
     document.getElementById("orderForm").addEventListener("submit", e => {
       e.preventDefault();
       if (!selected) return;
@@ -715,6 +823,27 @@
       const digits = "০১২৩৪৫৬৭৮৯";
       const phoneEn = phone.replace(/[০-৯]/g, d => digits.indexOf(d)).replace(/[\s-]/g, "");
       if (!/^(?:\+?88)?01[3-9]\d{8}$/.test(phoneEn)) { alert("সঠিক মোবাইল নম্বর দিন (যেমন: 01712345678)"); return; }
+
+      let payBlock = "";
+      let payInfo = { method: "", from: "", trx: "" };
+      if (activePay.length && ADVANCE_AMOUNT > 0) {
+        const method = document.getElementById("payMethod").value;
+        const from = document.getElementById("payFrom").value.trim().replace(/[০-৯]/g, d => digits.indexOf(d)).replace(/[\s-]/g, "");
+        const trx = document.getElementById("payTrx").value.trim().toUpperCase().replace(/\s+/g, "");
+        if (!method) { alert("অগ্রিম কোন মাধ্যমে পাঠিয়েছেন তা বেছে নিন"); return; }
+        if (!/^(?:\+?88)?01[3-9]\d{8}$/.test(from)) { alert("যে নম্বর থেকে টাকা পাঠিয়েছেন সেটা সঠিকভাবে লিখুন"); return; }
+        if (!/^[A-Z0-9]{6,20}$/.test(trx)) { alert("সঠিক Transaction ID (TrxID) লিখুন। অক্ষর ও সংখ্যা মিলিয়ে ৬-২০টি।"); return; }
+        payInfo = { method: method, from: from, trx: trx };
+        payBlock = `
+
+💳 *অগ্রিম পেমেন্ট*
+━━━━━━━━━━━━━━━━
+*পরিমাণ:* ৳${ADVANCE_AMOUNT} (পণ্যের দাম থেকে বাদ যাবে)
+*মাধ্যম:* ${method}
+*যে নম্বর থেকে পাঠিয়েছি:* ${from}
+*TrxID:* ${trx}
+📸 পেমেন্টের স্ক্রিনশট এই চ্যাটে পাঠাচ্ছি।`;
+      }
 
       let priceDetails = selected.price > 0 ? `৳ ${selected.price}` : "দাম জানতে চান";
       if (selected.oldPrice) priceDetails += ` (আগের দাম: ৳ ${selected.oldPrice})`;
@@ -737,11 +866,15 @@ ${selected.img}
 *বিস্তারিত ঠিকানা:* ${address}`;
 
       if (fb) msg += `\n*ফেসবুক:* ${fb}`;
+      msg += payBlock;
       msg += `\n\n✅ অনুগ্রহ করে অর্ডারটি কনফার্ম করুন।`;
 
-      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
+      const waUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`;
+      logOrder({ code: selected.code, product: selected.name, price: selected.price, name: name, phone: phoneEn, area: area, address: address, fb: fb, method: payInfo.method, from: payInfo.from, trx: payInfo.trx });
+      window.open(waUrl, "_blank");
       closeOrderModal();
       e.target.reset();
+      showDone(waUrl, !!payInfo.trx);
     });
 
     /* ---------- শুরু ---------- */
