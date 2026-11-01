@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>আমার বাজার - অনলাইন শপিং</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
     :root {
@@ -39,7 +38,15 @@
 
     /* ---------- সার্চ ---------- */
     .search-box { position: relative; max-width: 560px; margin: 0 auto 8px; }
-    .search-box i.fa-magnifying-glass { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #888; }
+    .search-box .search-ic { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; line-height: 1; }
+    .ic { width: 1.15em; height: 1.15em; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+    .ic path.f { fill: currentColor; stroke: none; }
+    .em { font-style: normal; }
+    .wa-img { display: none; width: 1.4em; height: 1.4em; border-radius: 50%; background: #fff var(--wa-img) center / 80% no-repeat; flex: 0 0 auto; }
+    body.has-wa .wa-img { display: inline-block; }
+    body.has-wa svg.ic-wa { display: none; }
+    .spin { display: inline-block; width: 18px; height: 18px; border: 3px solid #ccc; border-top-color: var(--secondary-color); border-radius: 50%; vertical-align: -3px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .search-box input { width: 100%; padding: 9px 44px 9px 42px; border: 2px solid var(--secondary-color); border-radius: 30px; font-size: 16px; outline: none; background: var(--white); }
     .search-box input:focus { box-shadow: 0 0 0 3px rgba(7, 94, 84, 0.18); }
     .clear-search { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: #eee; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; cursor: pointer; color: #444; }
@@ -128,6 +135,11 @@
     .done-box { text-align: center; }
     .done-box .tick { font-size: 54px; line-height: 1; margin-bottom: 8px; }
     .done-box h3 { margin-bottom: 10px; }
+    .done-state { border-radius: 10px; padding: 12px; margin: 4px 0 10px; font-size: 15px; line-height: 1.6; text-align: left; }
+    .done-state[hidden] { display: none; }
+    .st-wait { background: #fff8e1; color: #6b4a00; }
+    .st-ok { background: #e6f4ea; color: #137333; font-weight: 700; }
+    .st-bad { background: #fce8e6; color: #a50e0e; font-weight: 700; }
     .done-box ol { text-align: left; margin: 12px 0 16px 22px; line-height: 1.8; font-size: 15px; color: #444; }
     .done-box .wa-again { display: block; text-align: center; text-decoration: none; margin-bottom: 8px; }
     .done-box .ok-btn { width: 100%; border: 2px solid var(--secondary-color); background: #fff; color: var(--secondary-color); padding: 11px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; }
@@ -144,9 +156,13 @@
 </head>
 <body>
 
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-wa" viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><circle class="f" cx="8" cy="11" r="1.2"/><circle class="f" cx="12" cy="11" r="1.2"/><circle class="f" cx="16" cy="11" r="1.2"/></symbol>
+  </svg>
+
   <div id="closedScreen" hidden>
     <div class="closed-box">
-      <div class="closed-logo"><i class="fa-solid fa-bag-shopping"></i> আমার বাজার</div>
+      <div class="closed-logo"><span class="em">🛍️</span> আমার বাজার</div>
       <h1>দুঃখিত, এখন আমরা বন্ধ আছি</h1>
       <p id="closedMsg"></p>
     </div>
@@ -158,15 +174,15 @@
 
   <header>
     <div class="header-container">
-      <div class="logo"><i class="fa-solid fa-bag-shopping"></i> আমার বাজার</div>
+      <div class="logo"><span class="em">🛍️</span> আমার বাজার</div>
       <div class="nav-links">
-        <a href="#" class="nav-link-btn active" id="navHome"><i class="fa-solid fa-house"></i> Home</a>
-        <a href="#about" class="nav-link-btn" id="navAbout"><i class="fa-solid fa-circle-info"></i> About Us</a>
+        <a href="#" class="nav-link-btn active" id="navHome"><span class="em">🏠</span> Home</a>
+        <a href="#about" class="nav-link-btn" id="navAbout"><span class="em">ℹ️</span> About Us</a>
       </div>
     </div>
     <div class="sticky-tools">
       <div class="search-box">
-        <i class="fa-solid fa-magnifying-glass"></i>
+        <span class="search-ic">🔍</span>
         <input type="search" id="searchInput" placeholder="ব্র্যান্ড বা কোড খুঁজুন... (যেমন: কটন, RC-25)" autocomplete="off" />
         <button type="button" class="clear-search" id="clearSearch" hidden aria-label="মুছুন">&times;</button>
       </div>
@@ -190,24 +206,24 @@
       <div class="result-info" id="resultInfo"></div>
 
       <div id="codeSection" hidden>
-        <div class="section-title"><i class="fa-solid fa-tag"></i> কোড অনুযায়ী পণ্য</div>
+        <div class="section-title"><span class="em">🏷️</span> কোড অনুযায়ী পণ্য</div>
         <div class="product-grid" id="codeGrid"></div>
       </div>
 
       <div id="newSection" hidden>
-        <div class="section-title"><i class="fa-solid fa-bolt"></i> নতুন এসেছে</div>
+        <div class="section-title"><span class="em">⚡</span> নতুন এসেছে</div>
         <div class="product-grid" id="newGrid" style="margin-bottom:26px"></div>
       </div>
 
-      <div class="section-title" id="brandTitle"><i class="fa-solid fa-layer-group"></i> কালেকশন</div>
+      <div class="section-title" id="brandTitle"><span class="em">🗂️</span> কালেকশন</div>
       <div class="brand-grid" id="brandGrid">
-        <div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> লোড হচ্ছে...</div>
+        <div class="loading"><span class="spin"></span> লোড হচ্ছে...</div>
       </div>
     </div>
 
     <div id="brandArea" hidden>
       <div class="brand-bar">
-        <button type="button" class="back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i> পেছনে</button>
+        <button type="button" class="back-btn" id="backBtn"><span class="em">←</span> পেছনে</button>
         <div><h2 id="brandName"></h2><small id="brandCount"></small></div>
       </div>
       <div class="product-grid" id="productGrid"></div>
@@ -218,18 +234,18 @@
   </div>
 
   <div class="about-section" id="aboutArea" hidden>
-    <h2><i class="fa-solid fa-store"></i> আমাদের সম্পর্কে (About Us)</h2>
+    <h2><span class="em">🏪</span> আমাদের সম্পর্কে (About Us)</h2>
     <div class="about-grid">
       <div class="about-box">
-        <h3><i class="fa-solid fa-bullseye"></i> আমাদের লক্ষ্য</h3>
+        <h3><span class="em">🎯</span> আমাদের লক্ষ্য</h3>
         <p>আমরা শতভাগ গুণগত মানসম্পন্ন ছেলেদের, মেয়েদের ও শিশুদের পোশাক ও প্রয়োজনীয় জিনিসপত্র সরবরাহ করি।</p>
       </div>
       <div class="about-box">
-        <h3><i class="fa-solid fa-truck-fast"></i> ডেলিভারি প্রসেস</h3>
+        <h3><span class="em">🚚</span> ডেলিভারি প্রসেস</h3>
         <p>সারাদেশে ক্যাশ অন ডেলিভারিতে হোম ডেলিভারি দেওয়া হয়। ঢাকা সিটির ভেতর ১-২ দিন এবং বাইরে ৩-৫ দিনে ডেলিভারি পাবেন।</p>
       </div>
       <div class="about-box">
-        <h3><i class="fa-solid fa-cart-shopping"></i> কীভাবে অর্ডার করবেন?</h3>
+        <h3><span class="em">🛒</span> কীভাবে অর্ডার করবেন?</h3>
         <p>পছন্দের প্রোডাক্টের নিচে থাকা <b>"Order Now"</b> বাটনে ক্লিক করে আপনার নাম, মোবাইল নম্বর এবং ঠিকানা দিয়ে অর্ডার সাবমিট করুন।</p>
       </div>
     </div>
@@ -292,7 +308,7 @@
           </div>
         </div>
         <button type="submit" class="order-btn">
-          <i class="fa-brands fa-whatsapp"></i> WhatsApp-এ অর্ডার করুন
+          <span class="wa-img"></span><svg class="ic ic-wa" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wa"/></svg> WhatsApp-এ অর্ডার করুন
         </button>
       </form>
     </div>
@@ -302,19 +318,20 @@
     <div class="modal-content done-box">
       <div class="tick">✅</div>
       <h3>অর্ডারের তথ্য তৈরি হয়েছে</h3>
+      <div class="done-state" id="doneState" hidden></div>
       <ol>
         <li>WhatsApp খুলে যাওয়া মেসেজটি অবশ্যই <b>Send</b> করুন। Send না করলে আমরা অর্ডার পাব না।</li>
         <li id="doneStep2">পেমেন্টের <b>স্ক্রিনশট</b> ওই চ্যাটেই পাঠান।</li>
         <li id="doneStep3">আপনার ৳<span id="doneAmt"></span> যাচাই হলে আমরা WhatsApp-এ অর্ডার নিশ্চিত করব।</li>
         <li><span id="doneDelivery"></span> পণ্য পেয়ে যাবেন।</li>
       </ol>
-      <a href="#" target="_blank" rel="noopener" class="order-btn wa-again" id="waAgain"><i class="fa-brands fa-whatsapp"></i> WhatsApp খোলেনি? এখানে চাপুন</a>
+      <a href="#" target="_blank" rel="noopener" class="order-btn wa-again" id="waAgain"><span class="wa-img"></span><svg class="ic ic-wa" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wa"/></svg> WhatsApp খোলেনি? এখানে চাপুন</a>
       <button type="button" class="ok-btn" id="doneClose">ঠিক আছে</button>
     </div>
   </div>
 
   <a href="https://wa.me/8801891962606" target="_blank" rel="noopener" class="floating-chat">
-    <i class="fa-brands fa-whatsapp" style="font-size: 20px;"></i>
+    <span class="wa-img"></span><svg class="ic ic-wa" viewBox="0 0 24 24" aria-hidden="true" style="width:22px;height:22px"><use href="#i-wa"/></svg>
     সরাসরি মেসেজ করুন
   </a>
 
@@ -325,24 +342,27 @@
     // নিচে নিজের নম্বর বসান (Send Money/Personal নম্বর)। যে মাধ্যম দেবেন না, তার নম্বর "" রাখুন, সেটা দেখাবে না।
     // সবগুলো "" থাকলে অগ্রিম পেমেন্টের অংশটা পুরোপুরি বন্ধ থাকবে (আগের মতো সরাসরি অর্ডার)।
     const ADVANCE_AMOUNT = 50;          // অগ্রিম কত টাকা
-    const DELIVERY_TEXT = "কোকডহরা ইউনিয়োনে ৩- দিনের মধ্যে";   // অর্ডারের পরের পর্দায় দেখাবে
+    const DELIVERY_TEXT = "ঢাকায় ১-২ দিন, ঢাকার বাইরে ৩-৫ দিনের মধ্যে";   // অর্ডারের পরের পর্দায় দেখাবে
+    // টাকা-পাওয়ার SMS দেখে নিজে-নিজে অর্ডার যাচাই চালু করলে (Apps Script-এ SMS_KEY বসানো + ফোনে SMS-ফরওয়ার্ড অ্যাপ চালু হলে) এটা true করুন।
+    // true হলে অর্ডারের পর পর্দায় লাইভ দেখাবে "পেমেন্ট যাচাই হচ্ছে... → ✅ অর্ডার নিশ্চিত"। false থাকলে আগের মতো সাধারণ বার্তা।
+    const AUTO_VERIFY = false;
     const PAY_METHODS = [
-      { name: "bKash", number: "01613752130" },
+      { name: "bKash", number: "" },
       { name: "Nagad", number: "" },
       { name: "Rocket", number: "" }
     ];
 
     // ---------- ওপরের চলমান ব্যানার ছবি ----------
     // ছবিগুলো আসে Drive-এর আলাদা "ব্যানার" ফোল্ডার থেকে (Apps Script-এ BANNER_FOLDER_ID বসানো থাকলে)।
-    // HERO_FIRST: সবার আগে যে ছবিটা দেখাবে ("OPEN" ছবি, ইন্টারনেট থেকে)। দরকার না হলে "" করে দিন।
-    const HERO_FIRST = "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200";
+    // HERO_FIRST: সবার আগে যে ছবিটা দেখাবে (বাইরের কোনো সাইটের ছবি দেবেন না)। খালি রাখাই নিরাপদ।
+    const HERO_FIRST = "";
     const BANNER_SECONDS = 4;           // প্রতি ছবি কত সেকেন্ড থাকবে
 
     const CACHE_MINUTES = 5;            // নতুন তথ্য আনার ব্যবধান (ব্রাউজার ক্যাশ)
     const FETCH_TIMEOUT_MS = 12000;
     const PAGE_SIZE = 40;               // একবারে কতগুলো পণ্য দেখাবে
     const PART_SIZE = 1000;             // build.py-র সাথে একই থাকতে হবে
-    const PLACEHOLDER = "https://placehold.co/600x400/f0f0f0/333?text=No+Image";
+    const PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#f0f0f0"/><text x="300" y="210" font-family="sans-serif" font-size="32" fill="#999" text-anchor="middle">No Image</text></svg>');
     const DEFAULT_AREAS = ["বাড্ডা"];
 
     // Google Apps Script "লাইভ" লিংক (শেষে /exec)। খালি থাকলে শুধু GitHub-এর ডেটা চলবে।
@@ -480,7 +500,7 @@
                 ? `<span class="product-price">৳ ${now}</span>${hasDisc ? `<span class="old-price">৳ ${it.price}</span>` : ""}`
                 : `<span class="price-ask">দাম জানতে মেসেজ করুন</span>`}
             </div>
-            <button class="order-btn" data-index="${idx}"><i class="fa-brands fa-whatsapp"></i> Order Now</button>
+            <button class="order-btn" data-index="${idx}"><span class="wa-img"></span><svg class="ic ic-wa" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wa"/></svg> Order Now</button>
           </div>
         </div>`;
     }
@@ -570,7 +590,7 @@
       document.getElementById("brandArea").hidden = false;
       document.getElementById("brandName").textContent = b.t;
       document.getElementById("brandCount").textContent = `${CAT_LABEL[b.c] || ""} · ${bn(b.n)} টি পণ্য`;
-      document.getElementById("productGrid").innerHTML = '<div class="loading"><i class="fa-solid fa-spinner fa-spin"></i> লোড হচ্ছে...</div>';
+      document.getElementById("productGrid").innerHTML = '<div class="loading"><span class="spin"></span> লোড হচ্ছে...</div>';
       document.getElementById("loadMoreWrap").hidden = true;
       window.scrollTo(0, 0);
       const mine = bv;
@@ -796,6 +816,34 @@
         fetch(LIVE_URL, { method: "POST", mode: "no-cors", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(o) }).catch(() => {});
       } catch (_) {}
     }
+    let pollTimer = null;
+    function stopPoll() { clearTimeout(pollTimer); pollTimer = null; }
+    function setDoneState(kind, text) {
+      const el = document.getElementById("doneState");
+      el.className = "done-state st-" + kind;
+      el.textContent = text;
+      el.hidden = false;
+    }
+    function startPoll(phone, trx) {
+      stopPoll();
+      document.getElementById("doneState").hidden = true;
+      if (!AUTO_VERIFY || !LIVE_URL || !trx) return;
+      let tries = 0;
+      setDoneState("wait", "⏳ আপনার ৳" + ADVANCE_AMOUNT + " পেমেন্ট যাচাই হচ্ছে... এই পর্দা খোলা রাখুন (কয়েক মিনিট লাগতে পারে)।");
+      const tick = async () => {
+        if (document.getElementById("doneModal").style.display !== "flex") { stopPoll(); return; }
+        tries++;
+        try {
+          const res = await fetch(LIVE_URL + "?ostatus=1&phone=" + encodeURIComponent(phone) + "&trx=" + encodeURIComponent(trx) + "&t=" + Date.now(), { cache: "no-store" });
+          const d = await res.json();
+          if (d.state === "verified") { setDoneState("ok", "✅ আপনার ৳" + ADVANCE_AMOUNT + " পেমেন্ট পেয়েছি, অর্ডার নিশ্চিত হয়েছে! " + DELIVERY_TEXT + " পণ্য পেয়ে যাবেন।"); return; }
+          if (d.state === "soldout") { setDoneState("bad", "😔 দুঃখিত, পণ্যটি এইমাত্র অন্য একজনের কাছে বিক্রি হয়ে গেছে। আপনার অগ্রিম ৳" + ADVANCE_AMOUNT + " আমরা ফেরত দেব। WhatsApp-এ আমাদের জানান।"); return; }
+        } catch (_) { /* আবার চেষ্টা হবে */ }
+        if (tries >= 36) { setDoneState("wait", "⏳ যাচাই হতে একটু বেশি সময় লাগছে। নিশ্চিত হলে আমরা WhatsApp-এ জানাব।"); return; }
+        pollTimer = setTimeout(tick, 5000);
+      };
+      pollTimer = setTimeout(tick, 4000);
+    }
     function showDone(waUrl, hasPay) {
       document.getElementById("doneStep2").hidden = !hasPay;
       document.getElementById("doneStep3").hidden = !hasPay;
@@ -804,8 +852,8 @@
       document.getElementById("waAgain").href = waUrl;
       document.getElementById("doneModal").style.display = "flex";
     }
-    document.getElementById("doneClose").addEventListener("click", () => { document.getElementById("doneModal").style.display = "none"; });
-    document.getElementById("doneModal").addEventListener("click", e => { if (e.target.id === "doneModal") e.currentTarget.style.display = "none"; });
+    document.getElementById("doneClose").addEventListener("click", () => { stopPoll(); document.getElementById("doneModal").style.display = "none"; });
+    document.getElementById("doneModal").addEventListener("click", e => { if (e.target.id === "doneModal") { stopPoll(); e.currentTarget.style.display = "none"; } });
 
     document.getElementById("orderForm").addEventListener("submit", e => {
       e.preventDefault();
@@ -875,6 +923,7 @@ ${selected.img}
       closeOrderModal();
       e.target.reset();
       showDone(waUrl, !!payInfo.trx);
+      startPoll(phoneEn, payInfo.trx);
     });
 
     /* ---------- শুরু ---------- */
@@ -1059,6 +1108,18 @@ ${selected.img}
         window.open(adminUrl + (adminUrl.includes("?") ? "&" : "?") + "admin=1&code=" + encodeURIComponent(del.dataset.del), "_blank");
       }
     });
+
+    // আসল WhatsApp লোগোর ফাইল (wa-icon.svg বা wa-icon.png) সাইটের ফোল্ডারে আপলোড করা থাকলে সব আইকনে সেটা দেখাবে; না থাকলে সাধারণ চ্যাট আইকন
+    (function () {
+      const names = ["wa-icon.svg", "wa-icon.png"];
+      (function tryNext(i) {
+        if (i >= names.length) return;
+        const im = new Image();
+        im.onload = () => { document.documentElement.style.setProperty("--wa-img", 'url("' + new URL(names[i], location.href).href + '")'); document.body.classList.add("has-wa"); };
+        im.onerror = () => tryNext(i + 1);
+        im.src = names[i];
+      })(0);
+    })();
 
     initHero();
     init();
