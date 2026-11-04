@@ -345,7 +345,7 @@
     const DELIVERY_TEXT = "ঢাকায় ১-২ দিন, ঢাকার বাইরে ৩-৫ দিনের মধ্যে";   // অর্ডারের পরের পর্দায় দেখাবে
     // টাকা-পাওয়ার SMS দেখে নিজে-নিজে অর্ডার যাচাই চালু করলে (Apps Script-এ SMS_KEY বসানো + ফোনে SMS-ফরওয়ার্ড অ্যাপ চালু হলে) এটা true করুন।
     // true হলে অর্ডারের পর পর্দায় লাইভ দেখাবে "পেমেন্ট যাচাই হচ্ছে... → ✅ অর্ডার নিশ্চিত"। false থাকলে আগের মতো সাধারণ বার্তা।
-    const AUTO_VERIFY = false;
+    const AUTO_VERIFY = true;
     const PAY_METHODS = [
       { name: "bKash", number: "01613752130" },
       { name: "Nagad", number: "" },
