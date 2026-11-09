@@ -9,19 +9,14 @@ jobs:
         with: { distribution: temurin, java-version: 17 }
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: 8.9 }
-      - name: Signing key
-        env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
-        run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/ks.jks"
-            echo "KEYSTORE_FILE=$RUNNER_TEMP/ks.jks" >> "$GITHUB_ENV"
-          fi
       - name: Build
         working-directory: android-sms
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: gradle assembleDebug --no-daemon -Pandroid.useAndroidX=true
+      - name: সই দেখা
+        run: |
+          AS=$(ls $ANDROID_HOME/build-tools/*/apksigner | tail -1)
+          echo "এই লাইনটা প্রতিবার হুবহু এক হলে ফোনে আপডেট হবে; বদলে গেলে মুছে ইনস্টল করতে হবে:"
+          $AS verify --print-certs android-sms/app/build/outputs/apk/debug/app-debug.apk | grep "SHA-256"
       - uses: actions/upload-artifact@v4
         with:
           name: amar-bazar-sms-apk
