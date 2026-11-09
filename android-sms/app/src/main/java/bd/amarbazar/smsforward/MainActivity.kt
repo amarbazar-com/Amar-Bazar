@@ -1,11 +1,20 @@
 package bd.amarbazar.smsforward
 
 import android.Manifest
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.pm.ServiceInfo
+import android.os.IBinder
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Telephony
+import android.telephony.SmsManager
 import android.text.InputType
 import android.widget.Button
 import android.widget.EditText
@@ -21,6 +30,7 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
@@ -61,8 +71,12 @@ class MainActivity : android.app.Activity() {
             setOnClickListener {
                 save(); info.text = "পাঠানো হচ্ছে..."
                 thread {
-                    val r = try { Sender.send(this@MainActivity, "ping", "", "") } catch (e: Exception) { "ত্রুটি: ${e.message}" }
-                    runOnUiThread { info.text = "উত্তর: $r" }
+                    val r = try {
+                        val x = Sender.send(this@MainActivity, "ping", "", "")
+                        Sender.handleOut(this@MainActivity, x)
+                        x
+                    } catch (e: Exception) { "ত্রুটি: ${e.message}" }
+                    runOnUiThread { info.text = "উত্তর: " + r.take(400) }
                 }
             }
         })
@@ -71,10 +85,14 @@ class MainActivity : android.app.Activity() {
             text = "টেস্টের উত্তরে \"ok\":true এলে সংযোগ ঠিক আছে। \"চাবি ঠিক নয়\" এলে SMS_KEY মেলেনি।\n\n" +
                 "ফোনের সেটিংসে এই অ্যাপের ব্যাটারি 'Unrestricted/No restrictions' করুন এবং অ্যাপটা Force stop করবেন না।\n" +
                 "শুধু bKash/Nagad-এর লেনদেনের SMS (TrxID বা Balance আছে এমন) পাঠানো হয়, অন্য কোনো SMS পড়া বা পাঠানো হয় না।\n" +
-                "অ্যাপ প্রতি ১৫ মিনিটে \"আমি চালু আছি\" জানায়, বন্ধ থাকলে আপনাকে ইমেইল যায়।"
+                "অ্যাপ প্রতি ১৫ সেকেন্ডে সার্ভারকে জিজ্ঞেস করে কাস্টমারকে কোনো SMS পাঠাতে হবে কিনা (ওপরে স্থায়ী নোটিফিকেশন দেখাবে, ওটা সরাবেন না)। বন্ধ থাকলে আপনাকে ইমেইল যায়।\n" +
+                "অর্ডার নিশ্চিত হলে বা পাঠানো হলে কাস্টমারকে এই ফোনের সিম থেকে ছোট SMS যায় (SMS পাঠানোর অনুমতি দিতে হবে)।"
         })
         setContentView(ScrollView(this).apply { addView(box) })
-        requestPermissions(arrayOf(Manifest.permission.RECEIVE_SMS), 1)
+        val perms = arrayListOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.SEND_SMS)
+        if (Build.VERSION.SDK_INT >= 33) perms.add("android.permission.POST_NOTIFICATIONS")
+        requestPermissions(perms.toTypedArray(), 1)
+        Poller.start(this)
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "ping", ExistingPeriodicWorkPolicy.KEEP,
             PeriodicWorkRequestBuilder<PingWorker>(15, TimeUnit.MINUTES)
@@ -133,7 +151,43 @@ object Sender {
         val stream = if (code in 200..399) con.inputStream else con.errorStream
         val resp = stream?.bufferedReader()?.use { it.readText() } ?: ""
         con.disconnect()
-        return "HTTP $code $resp".take(400)
+        return "HTTP $code $resp"
+    }
+
+    /** সার্ভার যে SMS-গুলো কাস্টমারকে পাঠাতে বলল, সেগুলো এই ফোনের সিম থেকে পাঠায়, তারপর সার্ভারকে জানায়। */
+    @Suppress("DEPRECATION")
+    fun handleOut(c: Context, resp: String) {
+        try {
+            val i = resp.indexOf('{')
+            if (i < 0) return
+            val arr = JSONObject(resp.substring(i)).optJSONArray("out") ?: return
+            if (arr.length() == 0) return
+            if (c.checkSelfPermission(Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                log(c, "SMS পাঠানোর অনুমতি নেই (অ্যাপের অনুমতিতে SMS চালু করুন)")
+                return
+            }
+            val sm: SmsManager = if (Build.VERSION.SDK_INT >= 31) c.getSystemService(SmsManager::class.java) else SmsManager.getDefault()
+            val sent = ArrayList<String>()
+            val failed = ArrayList<String>()
+            for (k in 0 until arr.length()) {
+                val m = arr.getJSONObject(k)
+                val id = m.optString("id")
+                val phone = m.optString("phone")
+                val text = m.optString("text")
+                if (id.isEmpty() || phone.isEmpty() || text.isEmpty()) continue
+                try {
+                    sm.sendMultipartTextMessage(phone, null, sm.divideMessage(text), null, null)
+                    sent.add(id)
+                } catch (e: Exception) {
+                    failed.add(id)
+                }
+            }
+            if (sent.isNotEmpty()) send(c, "outack", sent.joinToString(","), "sent")
+            if (failed.isNotEmpty()) send(c, "outack", failed.joinToString(","), "fail")
+            if (sent.isNotEmpty()) log(c, "কাস্টমারকে " + sent.size + "টি SMS পাঠানো হয়েছে ✓")
+        } catch (e: Exception) {
+            log(c, "কাস্টমারকে SMS পাঠানো যায়নি: " + e.message)
+        }
     }
 
     fun log(c: Context, msg: String) {
@@ -148,10 +202,10 @@ class SendWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
         val sender = inputData.getString("sender") ?: ""
         return try {
             val r = Sender.send(applicationContext, "sms", text, sender)
-            if (r.contains("\"ok\":true")) { Sender.log(applicationContext, "পাঠানো হয়েছে ✓"); Result.success() }
-            else if (r.contains("\"ok\":false")) { Sender.log(applicationContext, "সার্ভার না করেছে: $r"); Result.failure() }
-            else if (runAttemptCount < 12) { Sender.log(applicationContext, "আবার চেষ্টা হবে: $r"); Result.retry() }
-            else { Sender.log(applicationContext, "ব্যর্থ: $r"); Result.failure() }
+            if (r.contains("\"ok\":true")) { Sender.log(applicationContext, "পাঠানো হয়েছে ✓"); Sender.handleOut(applicationContext, r); Result.success() }
+            else if (r.contains("\"ok\":false")) { Sender.log(applicationContext, "সার্ভার না করেছে: " + r.take(300)); Result.failure() }
+            else if (runAttemptCount < 12) { Sender.log(applicationContext, "আবার চেষ্টা হবে: " + r.take(300)); Result.retry() }
+            else { Sender.log(applicationContext, "ব্যর্থ: " + r.take(300)); Result.failure() }
         } catch (e: Exception) {
             if (runAttemptCount < 12) { Sender.log(applicationContext, "নেট সমস্যা, আবার চেষ্টা হবে"); Result.retry() }
             else { Sender.log(applicationContext, "ব্যর্থ: ${e.message}"); Result.failure() }
@@ -162,7 +216,66 @@ class SendWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 /** প্রতি ১৫ মিনিটে "আমি চালু আছি" জানায়। */
 class PingWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     override fun doWork(): Result {
-        try { Sender.send(applicationContext, "ping", "", "") } catch (e: Exception) { }
+        try { Sender.handleOut(applicationContext, Sender.send(applicationContext, "ping", "", "")) } catch (e: Exception) { }
         return Result.success()
+    }
+}
+
+/** ফোন চালু থাকলে প্রতি ১৫ সেকেন্ডে সার্ভারকে জিজ্ঞেস করে: কাস্টমারকে কোনো SMS পাঠাতে হবে কিনা। স্থায়ী নোটিফিকেশন লাগে (অ্যান্ড্রয়েডের নিয়ম)। */
+object Poller {
+    fun start(c: Context) {
+        try {
+            val i = Intent(c, PollService::class.java)
+            if (Build.VERSION.SDK_INT >= 26) c.startForegroundService(i) else c.startService(i)
+        } catch (e: Exception) {
+            Sender.log(c, "দ্রুত চেক চালু করা যায়নি: " + e.message)
+        }
+    }
+}
+
+class PollService : Service() {
+    @Volatile private var running = false
+
+    override fun onBind(i: Intent?): IBinder? = null
+
+    @Suppress("DEPRECATION")
+    override fun onStartCommand(i: Intent?, flags: Int, startId: Int): Int {
+        val ch = "poll"
+        val b: Notification.Builder
+        if (Build.VERSION.SDK_INT >= 26) {
+            getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(NotificationChannel(ch, "রোবট চালু", NotificationManager.IMPORTANCE_LOW))
+            b = Notification.Builder(this, ch)
+        } else {
+            b = Notification.Builder(this)
+        }
+        val n = b.setContentTitle("আমার বাজার রোবট চালু")
+            .setContentText("কাস্টমারকে SMS পাঠাতে প্রস্তুত")
+            .setSmallIcon(android.R.drawable.stat_notify_sync)
+            .setOngoing(true).build()
+        if (Build.VERSION.SDK_INT >= 29) startForeground(1, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC) else startForeground(1, n)
+        if (!running) {
+            running = true
+            thread {
+                while (running) {
+                    try {
+                        val p = getSharedPreferences("cfg", Context.MODE_PRIVATE)
+                        if (!p.getString("url", "").isNullOrBlank() && !p.getString("key", "").isNullOrBlank())
+                            Sender.handleOut(applicationContext, Sender.send(applicationContext, "ping", "", ""))
+                    } catch (e: Exception) { }
+                    try { Thread.sleep(15000) } catch (e: InterruptedException) { }
+                }
+            }
+        }
+        return START_STICKY
+    }
+
+    override fun onDestroy() { running = false; super.onDestroy() }
+}
+
+/** ফোন রিস্টার্ট হলে রোবট নিজে চালু হয়। */
+class BootReceiver : BroadcastReceiver() {
+    override fun onReceive(c: Context, i: Intent) {
+        if (i.action == Intent.ACTION_BOOT_COMPLETED) Poller.start(c)
     }
 }
