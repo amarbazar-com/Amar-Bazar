@@ -139,6 +139,12 @@
     .done-state[hidden] { display: none; }
     .st-wait { background: #fff8e1; color: #6b4a00; }
     .st-ok { background: #e6f4ea; color: #137333; font-weight: 700; }
+    .ord-banner { display: none; padding: 10px 14px; text-align: center; font-size: 15px; line-height: 1.5; font-weight: 700; }
+    .ord-banner.show { display: block; }
+    .ord-banner.ok { background: #e6f4ea; color: #137333; }
+    .ord-banner.wait { background: #fff8e1; color: #6b4a00; }
+    .ord-banner.bad { background: #fdecea; color: #b3261e; }
+    .ord-banner button { margin-left: 10px; border: 1px solid currentColor; background: transparent; color: inherit; border-radius: 6px; padding: 2px 10px; font: inherit; font-size: 13px; cursor: pointer; }
     .st-bad { background: #fce8e6; color: #a50e0e; font-weight: 700; }
     .done-box ol { text-align: left; margin: 12px 0 16px 22px; line-height: 1.8; font-size: 15px; color: #444; }
     .done-box .wa-again { display: block; text-align: center; text-decoration: none; margin-bottom: 8px; }
@@ -155,6 +161,7 @@
   </style>
 </head>
 <body>
+<div class="ord-banner" id="ordBanner"></div>
 
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <symbol id="i-wa" viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-8l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><circle class="f" cx="8" cy="11" r="1.2"/><circle class="f" cx="12" cy="11" r="1.2"/><circle class="f" cx="16" cy="11" r="1.2"/></symbol>
@@ -807,6 +814,7 @@
       document.body.removeChild(ta);
     }
     setupPay();
+    checkLastOrder(0);
 
     /* ---------- অর্ডার Sheet-এ জমা + অর্ডারের পরের পর্দা ---------- */
     function logOrder(o) {                      // Sheet-এর "orders" ট্যাবে পাঠায় (ব্যর্থ হলেও WhatsApp অর্ডার ঠিকই যাবে)
@@ -824,8 +832,42 @@
       el.textContent = text;
       el.hidden = false;
     }
+    /* ---------- আগের অর্ডার মনে রাখা: পাতা বন্ধ করে পরে খুললেও নিশ্চিতের বার্তা দেখা যাবে (এই ফোনের ব্রাউজারে) ---------- */
+    function rememberOrder(phone, trx) {
+      try { localStorage.setItem("ab_last_order", JSON.stringify({ phone: phone, trx: trx, t: Date.now(), code: selected ? selected.code : "" })); } catch (_) {}
+    }
+    function forgetOrder() { try { localStorage.removeItem("ab_last_order"); } catch (_) {} }
+    function showBanner(kind, text, closable) {
+      const b = document.getElementById("ordBanner");
+      b.className = "ord-banner show " + kind;
+      b.textContent = text;
+      if (closable) {
+        const x = document.createElement("button");
+        x.type = "button"; x.textContent = "ঠিক আছে";
+        x.addEventListener("click", () => { forgetOrder(); b.className = "ord-banner"; });
+        b.appendChild(x);
+      }
+    }
+    async function checkLastOrder(round) {
+      if (!AUTO_VERIFY || !LIVE_URL) return;
+      let o = null;
+      try { o = JSON.parse(localStorage.getItem("ab_last_order") || "null"); } catch (_) {}
+      if (!o || !o.trx || !o.phone) return;
+      if (Date.now() - o.t > 72 * 3600 * 1000) { forgetOrder(); return; }
+      if (document.getElementById("doneModal").style.display === "flex") return;
+      const tag = o.code ? " (" + o.code + ")" : "";
+      try {
+        const res = await fetch(LIVE_URL + "?ostatus=1&phone=" + encodeURIComponent(o.phone) + "&trx=" + encodeURIComponent(o.trx) + "&t=" + Date.now(), { cache: "no-store" });
+        const d = await res.json();
+        if (d.state === "verified") { showBanner("ok", "✅ আপনার অর্ডার" + tag + " নিশ্চিত হয়েছে। ধন্যবাদ!", true); return; }
+        if (d.state === "soldout") { showBanner("bad", "😔 দুঃখিত, আপনার অর্ডার করা পণ্যটি" + tag + " অন্য একজনের কাছে বিক্রি হয়ে গেছে। আমরা আপনার অগ্রিম ফেরত দেব।", true); return; }
+      } catch (_) { /* পরে আবার */ }
+      showBanner("wait", "⏳ আপনার আগের অর্ডারের" + tag + " পেমেন্ট যাচাই হচ্ছে...", false);
+      if ((round || 0) < 16) setTimeout(() => checkLastOrder((round || 0) + 1), 15000);
+    }
     function startPoll(phone, trx) {
       stopPoll();
+      rememberOrder(phone, trx);
       document.getElementById("doneState").hidden = true;
       if (!AUTO_VERIFY || !LIVE_URL || !trx) return;
       let tries = 0;
