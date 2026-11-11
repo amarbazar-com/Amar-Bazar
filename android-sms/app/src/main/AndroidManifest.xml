@@ -9,7 +9,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application
         android:allowBackup="false"
-        android:label="Amar Bazar SMS"
+        android:icon="@drawable/ic_launcher"
+        android:label="আমার বাজার রোবট"
         android:usesCleartextTraffic="false"
         android:theme="@android:style/Theme.Material.Light">
         <activity android:name=".MainActivity" android:exported="true">
